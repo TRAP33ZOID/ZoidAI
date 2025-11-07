@@ -14,6 +14,7 @@ We are currently in the initial setup phase, focusing on establishing the core R
 [x] Set up the environment for RAG (install dependencies).
 [x] Implement a basic RAG flow (data ingestion and retrieval simulation).
 [x] Set up the backend API route for handling basic chat interactions.
-[-] Design and implement a minimal frontend chat interface.
-[ ] Integrate the frontend with the backend API.
-[ ] Test and refine the agent's performance.
+[x] Commit current progress to Git repository.
+[x] Design and implement a minimal frontend chat interface.
+[x] Integrate the frontend with the backend API.
+[-] Test and refine the agent's performance.
