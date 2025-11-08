@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Volume2, Globe, Copy } from "lucide-react";
+import { toast } from "sonner";
 import { getLanguageOptions, getDefaultLanguage } from "@/lib/language";
 
 interface Message {
@@ -234,7 +235,7 @@ export function ChatInterface() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Copied to clipboard!");
+    toast.success("Copied to clipboard!");
   };
 
   const MessageBubble = ({ message }: { message: Message }) => (
