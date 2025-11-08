@@ -100,11 +100,76 @@ This phase established the foundational RAG intelligence using a text-based chat
 - Audio playback functional
 
 ### Known Limitations & Future Improvements
-- Currently supports English only (future: add Arabic for MENA region)
 - Audio format: WebM/Opus input → MP3 output (can be optimized)
 - Single user session (future: multi-session support)
 
-## 7. Next Steps (Future Phases)
+## 7. Phase 4A: Arabic Language Support (✅ COMPLETE)
+
+This phase adds bilingual (English/Arabic) support to the entire application, enabling users to switch between languages seamlessly.
+
+| Step | Description | Status |
+| :--- | :--- | :--- |
+| 1 | Create language configuration utility (`lib/language.ts`). | [x] |
+| 2 | Add language codes, display names, and system instructions (EN + AR-SA). | [x] |
+| 3 | Update `lib/voice.ts` to accept `languageCode` parameter for STT/TTS. | [x] |
+| 4 | Update `app/api/voice/route.ts` to extract and pass language parameter. | [x] |
+| 5 | Add language selector dropdown to chat interface UI. | [x] |
+| 6 | Implement RTL (Right-to-Left) styling for Arabic messages. | [x] |
+| 7 | Create sample English knowledge base (`knowledge-bases/sample-en.txt`). | [x] |
+| 8 | Create sample Arabic knowledge base (`knowledge-bases/sample-ar.txt`). | [x] |
+| 9 | Commit Phase 4A progress to Git repository. | [x] |
+
+### Phase 4A Implementation Details
+
+**New Files Created:**
+- `lib/language.ts` - Centralized language configuration, system instructions, and utility functions
+- `knowledge-bases/sample-en.txt` - Sample English knowledge base for ingestion and testing
+- `knowledge-bases/sample-ar.txt` - Sample Modern Standard Arabic knowledge base for ingestion and testing
+
+**Modified Files:**
+- `lib/voice.ts` - Updated `speechToText()` and `textToAudio()` to accept `languageCode` parameter
+- `app/api/voice/route.ts` - Extracts language from request, validates it, and passes to voice functions
+- `components/chat-interface.tsx` - Added language selector dropdown and RTL support for Arabic messages
+
+**Key Features Implemented:**
+- ✅ Language selector dropdown in chat header (English | العربية)
+- ✅ Dynamic system instructions based on selected language
+- ✅ Multilingual STT: Arabic speech-to-text via Google Cloud (ar-SA)
+- ✅ Multilingual TTS: Arabic text-to-speech via Google Cloud (ar-SA)
+- ✅ RTL text rendering for Arabic messages
+- ✅ Backward compatible: English remains default, existing workflows unaffected
+- ✅ Sample knowledge bases in both English and Arabic for testing
+
+**Language Support:**
+- English (en-US): Default language, LTR text rendering
+- Modern Standard Arabic (ar-SA): RTL text rendering, Arabic voice models
+
+**System Instructions:**
+- English: "You are Zoid AI Support Agent, a helpful and friendly customer service representative..."
+- Arabic: "أنت وكيل دعم Zoid الذكي، ممثل خدمة عملاء مفيد وودود..." (translated equivalent)
+
+**Sample Knowledge Base Content:**
+- Company information and product features (both languages)
+- FAQ responses and troubleshooting guides (both languages)
+- Pricing and service level agreements (both languages)
+- Regional considerations for MENA (both languages)
+
+### Testing Checklist for Phase 4A
+- [ ] Launch application with language selector visible
+- [ ] Switch between English and Arabic modes
+- [ ] Record voice message in English → verify transcription, response, and audio
+- [ ] Record voice message in Arabic → verify transcription, response, and audio
+- [ ] Verify RTL rendering for Arabic messages in chat
+- [ ] Verify text-based chat works in both languages
+- [ ] Upload sample knowledge bases and test retrieval in both languages
+
+### Known Limitations & Future Improvements
+- Currently supports Modern Standard Arabic (ar-SA); future: regional dialects (ar-EG, ar-AE)
+- Audio format: WebM/Opus input → MP3 output (can be optimized)
+- Single user session (future: multi-session support)
+- Language fallback: If knowledge base contains only English but Arabic selected, responses may be incomplete
+
+## 8. Next Steps (Future Phases)
 
 ### Current Handover Context
 The last prompt used to initiate the current phase (Phase 2) was:
