@@ -1,11 +1,78 @@
 # 🚀 Zoid AI Support Agent - Master Project Handover Document
 
-**Version:** 2.1 (Phase 4A Fully Verified)
-**Last Updated:** November 8, 2025 (20:10 UTC)
-**Current Status:** ✅ Phase 4A Complete & Verified - Production-Ready Bilingual Voice Agent
+**Version:** 3.0 (Post-Master Audit)
+**Last Updated:** November 8, 2025 (Post-Audit)
+**Current Status:** ⚠️ STRATEGIC PIVOT REQUIRED - Critical Gaps Identified
 **Maintained By:** AI Engineering Team
+**Audited By:** Claude Sonnet 4.5 (Master Agent)
 
-> **FOR MASTER AGENTS**: This is a comprehensive handover document with critical architecture decisions, system dependencies, known constraints, and detailed roadmap options. Read completely before taking over.
+> **CRITICAL UPDATE**: A comprehensive audit has revealed that while the foundation is solid, **the current system is a chatbot, not a phone-answering agent**. Major architectural changes required to achieve the end goal. See [`ROADMAP.md`](ROADMAP.md:1) for corrected strategy.
+
+> **FOR NEW AGENTS**: Read this handover document first for implementation details, then review [`ROADMAP.md`](ROADMAP.md:1) for strategic direction and priorities.
+
+---
+
+## 🚨 CRITICAL AUDIT FINDINGS (November 8, 2025)
+
+### Master Audit Summary
+
+A comprehensive audit by Claude Sonnet 4.5 has identified **critical gaps** between the current implementation and the end goal:
+
+**✅ What Works:**
+- RAG system with vector search
+- Gemini AI integration
+- Voice recording/playback via web interface
+- Bilingual English/Arabic support (UI level)
+
+**❌ Critical Issues Found:**
+
+1. **BROKEN: Language-Aware Ingestion** (BLOCKING)
+   - Documents uploaded without language tags
+   - Arabic queries retrieving English documents
+   - Phase 4A language filtering incomplete
+   - **Fix Required:** Update [`app/api/ingest/route.ts`](app/api/ingest/route.ts:1) and [`components/ingestion-form.tsx`](components/ingestion-form.tsx:1)
+
+2. **MISSING: Telephony Infrastructure** (BLOCKING END GOAL)
+   - Current: Web chatbot with batch audio
+   - Required: Real-time phone call handling
+   - Gap: No streaming, no phone numbers, no call routing
+   - **Fix Required:** Implement Phase 4.5 (see [`ROADMAP.md`](ROADMAP.md:1))
+
+3. **MISSING: Session Management**
+   - All chat history in React state (lost on refresh)
+   - No conversation persistence
+   - No multi-user support
+
+4. **MISSING: Cost Monitoring**
+   - No tracking of API usage
+   - Estimated $2,800/month unmonitored
+   - No alerts or budget controls
+
+### The Fundamental Problem
+
+**Current Architecture:**
+```
+User Browser → Record Audio → Send Batch → Process → Return Audio
+Latency: 3-7 seconds | Type: REQUEST/RESPONSE
+```
+
+**Required Architecture:**
+```
+Phone Call → Telephony → Streaming STT ⇄ RAG ⇄ AI ⇄ Streaming TTS → Caller
+Latency: <500ms | Type: CONTINUOUS STREAMING
+```
+
+**Verdict:** We built a **chatbot**, not a **call center agent**. The gap is significant.
+
+### Updated Strategy
+
+See [`ROADMAP.md`](ROADMAP.md:1) for the complete corrected roadmap. Key changes:
+
+- **Week 1:** Fix critical bugs (language ingestion, cost monitoring)
+- **Weeks 2-4:** NEW Phase 4.5 - Telephony integration (VAPI.ai recommended)
+- **Week 5+:** Continue with multi-user, handoff, tools, hardening
+
+**Next Agent Instructions:** Start with [`ROADMAP.md`](ROADMAP.md:1) Phase 4.1 (Bug Fixes), then proceed to Phase 4.5 (Telephony).
 
 ---
 
@@ -237,6 +304,47 @@ The comprehensive logging infrastructure now provides:
    - ✅ Workaround: Centralized in [`lib/gemini.ts`](lib/gemini.ts:1) as `EMBEDDING_MODEL`
 5. **Supabase Function**: Custom `match_documents()` RPC required
    - ✅ Workaround: SQL in [`lib/rag.ts`](lib/rag.ts:61) (must be created manually in Supabase)
+---
+
+## 9. CRITICAL UPDATE: Revised Roadmap
+
+> **⚠️ MASTER AUDIT FINDING:** The original roadmap (Phases 4B-4E below) had critical gaps. A comprehensive audit identified that **telephony infrastructure is completely missing**, which is required to achieve the end goal of receiving phone calls.
+
+### Updated Priority Sequence
+
+See [`ROADMAP.md`](ROADMAP.md:1) for the complete corrected roadmap. Key changes:
+
+**NEW PHASES:**
+- **Phase 4.1: Bug Fixes** (Week 1) - Fix language ingestion, add document management, cost monitoring
+- **Phase 4.5: Telephony Integration** (Weeks 2-4) - VAPI.ai/Twilio for real phone calls
+
+**REORDERED:**
+- Phase 4D moved UP (Multi-user is foundational)
+- Phase 4B moved DOWN (Tool use is premature)
+
+**Why This Matters:**
+Current system = Web chatbot with batch audio (3-7s latency)
+Required system = Streaming phone agent (<500ms latency)
+
+**Bottom Line:** Without telephony, you cannot receive customer calls. This was a fundamental architectural gap.
+
+### Critical Bugs to Fix First
+
+Before proceeding to telephony, fix these **blocking issues**:
+
+1. **Language-Aware Ingestion** - Documents not tagged with language
+2. **Document Management** - No UI to view/delete documents  
+3. **Session Persistence** - History lost on refresh
+4. **Cost Monitoring** - No tracking ($2,800/month unmonitored)
+
+**Next Steps:** Start with [`ROADMAP.md`](ROADMAP.md:1) Phase 4.1, then proceed to Phase 4.5.
+
+---
+
+## 10. Original Future Phases (For Reference)
+
+> **⚠️ NOTE:** The sections below are the **original roadmap** before the audit. They have been superseded by [`ROADMAP.md`](ROADMAP.md:1). Kept for historical reference only.
+
 
 ---
 
