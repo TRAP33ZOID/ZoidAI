@@ -1,28 +1,31 @@
 # 🗺️ Zoid AI Voice Agent - Strategic Roadmap
 
-**Last Updated:** November 8, 2025
-**Status:** Post Master Audit - Strategic Pivot Required
-**Audited By:** Claude Sonnet 4.5 (Master Agent)
+**Last Updated:** November 10, 2025
+**Current Status:** Phases 1-4 Complete, Ready for Phase 5
 
 ---
 
-## 🎯 END GOAL
+## 🎯 End Goal
 
 **Build an AI voice agent that receives customer calls and answers from a knowledge base.**
 
-### Current Reality Check
-
-**What We Have:**
+### What We Have (Phases 1-4 Complete)
 - ✅ Web-based chatbot with voice recording
 - ✅ RAG system with document retrieval
-- ✅ Text-to-Speech and Speech-to-Text
+- ✅ Speech-to-Text and Text-to-Speech
 - ✅ Bilingual support (English/Arabic)
+- ✅ Cost monitoring dashboard
+- ✅ Document management
+- ✅ Session persistence
 
-**What We're Missing:**
-- ❌ **Telephony infrastructure** (can't receive phone calls)
-- ❌ **Real-time streaming** (3-7 second latency, not <500ms)
-- ❌ **Call routing and IVR**
-- ❌ **Continuous audio streaming** (currently batch request/response)
+### What We Need (Phases 5-9)
+- ❌ Telephony infrastructure (can't receive phone calls)
+- ❌ Real-time streaming (<500ms latency)
+- ❌ Call routing and IVR
+- ❌ Multi-user sessions with database
+- ❌ Human handoff system
+- ❌ Tool use/function calling
+- ❌ Production hardening
 
 ### The Gap
 
@@ -32,443 +35,304 @@ User Browser → Record Audio → Send Batch → Process → Return Audio
 ⚠️ This is a CHATBOT, not a CALL AGENT
 
 Required Architecture:
-Phone Call → Telephony Provider → Streaming STT ⇄ RAG ⇄ AI ⇄ Streaming TTS → Caller
+Phone Call → Telephony → Streaming STT ⇄ RAG ⇄ AI ⇄ Streaming TTS → Caller
 ✅ This is what we need to build
 ```
 
 ---
 
-## 🚨 CRITICAL BUGS DISCOVERED
+## 📋 Completed Phases
 
-### Bug #1: Broken Language-Aware Ingestion (BLOCKING)
+### Phase 1: Core RAG Chat ✅
+- Gemini 2.5 Flash integration
+- RAG with simulated knowledge base
+- Text-based chat interface
+- Backend API routes
 
-**Severity:** CRITICAL  
-**Impact:** Arabic knowledge base doesn't work properly
+### Phase 2: Persistent Knowledge Base ✅
+- Supabase/pgvector integration
+- Document ingestion with embeddings
+- Vector storage and retrieval
+- Chunking strategy
 
-**Problem:**
-- [`app/api/ingest/route.ts`](app/api/ingest/route.ts:13) doesn't accept language parameter
-- Documents stored WITHOUT language metadata
-- RAG system expects language filtering, but documents lack this field
-- Result: English documents retrieved for Arabic queries
+### Phase 3: Voice Integration ✅
+- Google Cloud Speech-to-Text
+- Google Cloud Text-to-Speech
+- Real-time audio recording
+- Audio playback controls
+- Full RAG integration
 
-**Fix Required:**
-1. Add `language` parameter to ingestion API
-2. Update [`components/ingestion-form.tsx`](components/ingestion-form.tsx:1) with language selector
-3. Store language in document metadata
-4. Test with bilingual knowledge base
-
-**Priority:** HIGH - Fix in Phase 4.1 (Week 1)
-
----
-
-### Bug #2: No Document Management
-
-**Severity:** MEDIUM  
-**Impact:** Can't view, edit, or delete uploaded documents
-
-**Missing Features:**
-- Document list/viewer
-- Delete functionality
-- Document metadata display
-- Language filtering
-
-**Fix Required:**
-- Create `components/document-list.tsx`
-- Add `app/api/documents/route.ts` (GET, DELETE)
-- Build admin UI
-
-**Priority:** MEDIUM - Fix in Phase 4.1 (Week 1)
+### Phase 4: Arabic Language Support ✅
+- Bilingual UI (English/Arabic)
+- Language-aware RAG retrieval
+- RTL text rendering
+- Arabic STT/TTS
+- Sample knowledge bases
+- Dynamic system instructions
+- Cost monitoring dashboard
+- Document management UI
+- Session persistence (localStorage)
 
 ---
 
-### Bug #3: No Session Persistence
+## 🚀 Remaining Phases
 
-**Severity:** MEDIUM  
-**Impact:** All chat history lost on refresh
-
-**Current State:**
-- Messages stored in React state only
-- No conversation history
-- Can't resume conversations
-
-**Fix Required:**
-- Short-term: Use localStorage
-- Long-term: Database storage (Phase 4D)
-
-**Priority:** MEDIUM - Fix in Phase 4.1 (Week 1)
-
----
-
-### Bug #4: No Cost Monitoring
-
-**Severity:** HIGH  
-**Impact:** Could rack up unexpected bills
-
-**Current Costs (Unmonitored!):**
-- Gemini 2.5 Flash: $0.075 per 1M input tokens
-- Google Cloud STT: $0.016 per minute
-- Google Cloud TTS: $16 per 1M characters ⚠️
-
-**For 1000 calls/day:**
-- Estimated: **$2,800/month**
-- **No alerts or tracking in place!**
-
-**Fix Required:**
-- Create `lib/cost-monitor.ts`
-- Track requests, tokens, TTS characters
-- Daily cost alerts
-- Usage dashboard
-
-**Priority:** HIGH - Fix in Phase 4.1 (Week 1)
-
----
-
-## 📋 CORRECTED ROADMAP
-
-### Phase 4.1: Bug Fixes & Foundation (Week 1)
-
-**Goal:** Fix critical issues blocking progress
-
-| Task | Priority | Days |
-|------|----------|------|
-| Fix language-aware ingestion | HIGH | 2 |
-| Add document management UI | MEDIUM | 1 |
-| Implement session persistence (localStorage) | MEDIUM | 0.5 |
-| Add cost monitoring & tracking | HIGH | 1 |
-| Update PROJECT_HANDOVER.md | LOW | 0.5 |
-
-**Deliverables:**
-- ✅ Language-tagged document uploads
-- ✅ Document list viewer with delete
-- ✅ Persistent chat history (localStorage)
-- ✅ Cost tracking dashboard
-- ✅ Updated documentation
-
----
-
-### Phase 4.5: Telephony Integration (Weeks 2-4) ⭐ NEW - CRITICAL
+### Phase 5: Telephony Integration 🔜 NEXT
 
 **Goal:** Enable real phone calls with streaming audio
 
-#### Step 1: Research & Decision (Week 2)
+**The Challenge:**
+Current system uses batch processing (3-7s latency). Need continuous streaming (<500ms latency) with phone number provisioning and IVR.
 
-**Telephony Platform Options:**
+**Key Features:**
+- Phone number provisioning
+- IVR language selection menu
+- Streaming STT/TTS pipeline
+- WebSocket or Server-Sent Events integration
+- Low-latency RAG retrieval (<200ms)
+- Call routing and management
 
-| Platform | Cost | Complexity | Timeline | Recommendation |
-|----------|------|------------|----------|----------------|
-| **VAPI.ai** | $0.05/min | LOW | 1-2 weeks | ⭐ **RECOMMENDED** |
-| Retell AI | $0.06/min | LOW | 1-2 weeks | Good alternative |
-| Twilio | $0.0085/min* | HIGH | 4-6 weeks | Most flexible |
-| Bland.ai | $0.09/min | LOW | 1-2 weeks | For outbound only |
+**Implementation Approach:**
 
-*Plus STT/TTS costs separately
+1. **Select Telephony Platform**
+   
+   **Recommended: VAPI.ai**
+   - Built for AI voice agents
+   - Real-time streaming built-in
+   - Pre-integrated STT/TTS
+   - Strong Arabic support
+   - Webhook integration
+   - Fastest implementation
+   
+   **Alternatives:**
+   - Retell AI (similar to VAPI)
+   - Twilio (more complex, more flexible)
+   - Bland.ai (outbound focus)
 
-**Why VAPI.ai?**
-1. ✅ Built specifically for AI voice agents
-2. ✅ Handles real-time streaming out-of-box
-3. ✅ Pre-integrated STT/TTS (Google, Azure, Deepgram)
-4. ✅ Strong Arabic support for MENA region
-5. ✅ Webhook integration with existing RAG
-6. ✅ Fastest path to live calls (1-2 weeks)
-
-**Research Checklist:**
-- [ ] Sign up for VAPI trial account
-- [ ] Test voice quality in English & Arabic
-- [ ] Verify RAG webhook integration
-- [ ] Compare pricing for 1000 calls/day
-- [ ] Test call latency (<500ms target)
-- [ ] Verify MENA phone number support
-
-#### Step 2: Implementation (Weeks 3-4)
-
-**Required Changes:**
-
-1. **Phone Number Provisioning**
-   - Get phone number via VAPI/Twilio
-   - Configure IVR (language selection menu)
+2. **Phone Number & IVR**
+   - Provision phone number
+   - Configure language selection IVR
    - Set up call routing
+   - Test incoming calls
 
-2. **Streaming Pipeline**
-   - Replace batch API with WebSocket/SSE
-   - Implement streaming STT integration
-   - Build real-time RAG retrieval
-   - Integrate streaming TTS
+3. **Streaming Pipeline**
+   - Replace batch API with streaming
+   - Implement WebSocket/SSE endpoints
+   - Real-time STT integration
+   - Streaming TTS responses
+   - State management for calls
 
-3. **Backend Adaptation**
-   - Create `app/api/vapi-webhook/route.ts`
-   - Modify RAG for low-latency (<200ms)
-   - Add streaming response chunks
-   - Implement conversation state management
-
-4. **Testing Infrastructure**
-   - Call simulation framework
-   - Latency monitoring
-   - Quality assurance checklist
-   - Load testing (10 concurrent calls)
-
-**Deliverables:**
-- ✅ Live phone number receiving calls
-- ✅ IVR with language selection
-- ✅ Streaming STT/TTS pipeline
-- ✅ RAG integration via webhooks
-- ✅ <500ms response latency
-- ✅ Test call recordings
+4. **Backend Modifications**
+   - Create webhook endpoint (e.g., `app/api/vapi-webhook/route.ts`)
+   - Optimize [`lib/rag.ts`](lib/rag.ts:1) for low latency
+   - Add streaming response handling
+   - Implement conversation state tracking
 
 **Success Criteria:**
-- Real phone call answered by AI
-- Natural conversation flow
-- Arabic and English support working
-- No dropped calls or audio glitches
-- Latency < 500ms for responses
+- Live phone number receives calls
+- IVR language selection works
+- AI responds in real-time
+- Response latency <500ms
+- English and Arabic both work
+- No dropped calls or audio issues
 
 ---
 
-### Phase 4D: Multi-User + Database Sessions (Week 5)
+### Phase 6: Multi-User Sessions
 
 **Goal:** Support multiple concurrent users with persistent history
 
-**Why This Moved Up:**
-- More foundational than tool use
-- Required before production
-- Enables analytics and debugging
+**Key Features:**
+- User authentication (phone number based)
+- Database session storage
+- Conversation history retrieval
+- Session lifecycle management
+- Analytics dashboard
+
+**Database Schema:**
+```sql
+CREATE TABLE users (
+  id UUID PRIMARY KEY,
+  phone_number VARCHAR(20) UNIQUE,
+  preferred_language VARCHAR(10),
+  created_at TIMESTAMP
+);
+
+CREATE TABLE chat_sessions (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  started_at TIMESTAMP,
+  ended_at TIMESTAMP,
+  call_duration INT,
+  language VARCHAR(10)
+);
+
+CREATE TABLE chat_messages (
+  id UUID PRIMARY KEY,
+  session_id UUID REFERENCES chat_sessions(id),
+  role VARCHAR(10), -- 'user' or 'assistant'
+  content TEXT,
+  audio_url TEXT,
+  created_at TIMESTAMP
+);
+```
 
 **Implementation:**
-
-1. **Database Schema**
-   ```sql
-   -- Users table
-   CREATE TABLE users (
-     id UUID PRIMARY KEY,
-     phone_number VARCHAR(20) UNIQUE,
-     preferred_language VARCHAR(10),
-     created_at TIMESTAMP
-   );
-
-   -- Sessions table
-   CREATE TABLE chat_sessions (
-     id UUID PRIMARY KEY,
-     user_id UUID REFERENCES users(id),
-     started_at TIMESTAMP,
-     ended_at TIMESTAMP,
-     call_duration INT,
-     language VARCHAR(10)
-   );
-
-   -- Messages table
-   CREATE TABLE chat_messages (
-     id UUID PRIMARY KEY,
-     session_id UUID REFERENCES chat_sessions(id),
-     role VARCHAR(10), -- 'user' or 'assistant'
-     content TEXT,
-     audio_url TEXT,
-     created_at TIMESTAMP
-   );
-   ```
-
-2. **Authentication (Optional)**
-   - Phone number verification
-   - Session tokens
-   - JWT for API access
-
-3. **Session Management**
-   - Create `lib/session-manager.ts`
-   - CRUD operations for sessions
-   - History retrieval API
-   - Export conversations (PDF/JSON)
-
-4. **Analytics Dashboard**
-   - Total calls per day/week
-   - Average call duration
-   - Most asked questions
-   - Language distribution
-   - User retention metrics
+- `lib/auth.ts` - Authentication helpers
+- `lib/session-manager.ts` - CRUD operations
+- Session list UI
+- History retrieval API
+- Analytics dashboard
+- Export functionality
 
 **Deliverables:**
-- ✅ User registration system
-- ✅ Persistent conversation history
-- ✅ Session list UI
-- ✅ Analytics dashboard
-- ✅ Export functionality
+- User registration system
+- Persistent conversation storage
+- Session history UI
+- Analytics and metrics
+- Export to PDF/JSON
 
 ---
 
-### Phase 4C: Human Handoff System (Week 6)
+### Phase 7: Human Handoff System
 
 **Goal:** Escalate complex queries to human agents
 
-**Why This Matters for Calls:**
-- AI can't handle all scenarios
-- Legal/sensitive issues need humans
-- Customer satisfaction fallback
+**Key Features:**
+- Confidence scoring on AI responses
+- Automatic escalation triggers
+- Call transfer to human agents
+- Agent notification system
+- Context transfer with full history
+- Queue management
+
+**Escalation Triggers:**
+- Low confidence score (< 0.6)
+- User explicitly requests human agent
+- Multiple "I don't know" responses
+- Profanity or escalation detected
 
 **Implementation:**
-
-1. **Confidence Scoring**
-   - Create `lib/confidence-scorer.ts`
-   - Score based on RAG similarity
-   - Track conversation confusion signals
-   - Set escalation thresholds
-
-2. **Call Transfer**
-   - Twilio call transfer API
-   - Warm handoff with context
-   - Agent notification (SMS/Slack)
-   - Queue management
-
-3. **Session Transfer**
-   - Export conversation history
-   - Agent dashboard for takeover
-   - Resume capability
-   - Post-call notes
-
-4. **Triggers**
-   - Low confidence score (< 0.6)
-   - User requests human ("speak to agent")
-   - Multiple "I don't know" responses
-   - Profanity/escalation detected
+- `lib/confidence-scorer.ts` - Score AI responses
+- `lib/escalation.ts` - Trigger logic
+- Call transfer API integration
+- Agent dashboard for takeover
+- Notification system (SMS/Slack)
+- Post-call notes capability
 
 **Deliverables:**
-- ✅ Confidence scoring system
-- ✅ Call transfer functionality
-- ✅ Agent notification system
-- ✅ Handoff UI for agents
-- ✅ Session export (PDF)
+- Confidence scoring system
+- Call transfer mechanism
+- Agent notification system
+- Handoff UI for human agents
+- Session export with context
 
 ---
 
-### Phase 4B: Tool Use / Function Calling (Week 7)
+### Phase 8: Tool Use / Function Calling
 
-**Goal:** Enable AI to call external functions/APIs
-
-**Why This Moved Down:**
-- Less critical than telephony
-- Requires stable call infrastructure first
-- Can be added incrementally
+**Goal:** Enable AI to call external functions and APIs
 
 **Use Cases:**
-1. **CRM Integration**
-   - Look up customer data
-   - Update contact info
-   - Log call notes
-
-2. **Order Management**
-   - Check order status
-   - Process returns
-   - Update shipping address
-
-3. **Appointment Booking**
-   - Check availability
-   - Schedule appointments
-   - Send confirmations
-
-4. **Knowledge Base Updates**
-   - Flag incorrect information
-   - Request human review
-   - Submit feedback
+- **CRM Integration:** Look up customer data, update contact info
+- **Order Management:** Check order status, process returns
+- **Appointment Booking:** Check availability, schedule appointments
+- **Knowledge Base:** Flag incorrect information for review
 
 **Implementation:**
+```typescript
+// lib/tools.ts
+export const tools = {
+  checkOrderStatus: {
+    name: "check_order_status",
+    description: "Look up order by ID",
+    parameters: { orderId: "string" },
+    execute: async (params) => { /* ... */ }
+  },
+  // ... more tools
+};
+```
 
-1. **Tool Registry**
-   ```typescript
-   // lib/tools.ts
-   export const tools = {
-     checkOrderStatus: {
-       name: "check_order_status",
-       description: "Look up order by ID",
-       parameters: {
-         orderId: "string"
-       },
-       execute: async (params) => { /* ... */ }
-     },
-     // ... more tools
-   };
-   ```
-
-2. **Gemini Function Calling**
-   - Define tool schemas
-   - Parse function calls
-   - Execute safely with validation
-   - Return results to AI
-
-3. **Safety & Validation**
-   - User confirmation for actions
-   - Audit logging
-   - Rate limiting per tool
-   - Rollback capability
+**Safety Features:**
+- User confirmation for actions
+- Comprehensive audit logging
+- Rate limiting per tool
+- Parameter validation
+- Rollback capability
 
 **Deliverables:**
-- ✅ Tool registry system
-- ✅ Function executor with safety
-- ✅ 5-10 basic tools
-- ✅ Audit logging
-- ✅ User confirmation flow
+- Tool registry system
+- Safe function executor
+- 5-10 basic tools
+- Audit logging system
+- User confirmation flow
 
 ---
 
-### Phase 4E: Production Hardening (Weeks 8-9)
+### Phase 9: Production Hardening
 
 **Goal:** Production-ready, scalable, monitored system
 
-**Critical for Launch:**
+**Key Areas:**
 
-1. **Error Recovery**
-   - Retry logic for API failures
-   - Fallback responses
-   - Graceful degradation
-   - Circuit breakers
+**1. Error Recovery**
+- Retry logic for API failures
+- Fallback responses
+- Graceful degradation
+- Circuit breakers
 
-2. **Rate Limiting**
-   - Per-user call limits
-   - IP-based throttling
-   - API quota management
-   - Cost caps
+**2. Rate Limiting**
+- Per-user call limits
+- IP-based throttling
+- API quota management
+- Cost caps and alerts
 
-3. **Performance Optimization**
-   - Response caching (Redis)
-   - Database connection pooling
-   - CDN for static assets
-   - Lazy loading
+**3. Performance Optimization**
+- Response caching (Redis)
+- Database connection pooling
+- CDN for static assets
+- Lazy loading strategies
 
-4. **Monitoring & Alerting**
-   - Uptime monitoring (99.9% SLA)
-   - Error rate tracking
-   - Latency monitoring
-   - Cost alerts
-   - On-call rotation
+**4. Monitoring & Alerting**
+- Uptime monitoring (99.9% SLA target)
+- Error rate tracking
+- Latency monitoring
+- Cost alerts
+- On-call rotation setup
 
-5. **Security Hardening**
-   - DDoS protection
-   - SQL injection prevention
-   - XSS protection
-   - HTTPS enforcement
-   - Secrets management (Vault)
+**5. Security Hardening**
+- DDoS protection
+- SQL injection prevention
+- XSS protection
+- HTTPS enforcement
+- Secrets management (Vault/AWS Secrets)
 
-6. **CI/CD Pipeline**
-   ```yaml
-   # .github/workflows/ci-cd.yml
-   - Run tests
-   - Lint code
-   - Build Docker image
-   - Deploy to staging
-   - Run integration tests
-   - Deploy to production (blue-green)
-   ```
+**6. CI/CD Pipeline**
+```yaml
+# .github/workflows/ci-cd.yml
+- Run tests
+- Lint code
+- Build Docker image
+- Deploy to staging
+- Run integration tests
+- Blue-green production deployment
+```
 
-7. **Load Testing**
-   - Simulate 100 concurrent calls
-   - Test database under load
-   - API stress testing
-   - Failover testing
+**7. Load Testing**
+- Simulate 100+ concurrent calls
+- Database stress testing
+- API performance testing
+- Failover testing
 
 **Deliverables:**
-- ✅ Comprehensive error handling
-- ✅ Rate limiting middleware
-- ✅ Monitoring dashboard (Datadog/Grafana)
-- ✅ CI/CD pipeline
-- ✅ Load test results
-- ✅ Security audit passed
-- ✅ Deployment playbook
-- ✅ Operations runbook
+- Comprehensive error handling
+- Rate limiting middleware
+- Monitoring dashboard (Datadog/Grafana)
+- CI/CD pipeline
+- Load test results
+- Security audit report
+- Deployment playbook
+- Operations runbook
 
 ---
 
@@ -476,21 +340,21 @@ Phone Call → Telephony Provider → Streaming STT ⇄ RAG ⇄ AI ⇄ Streaming
 
 ### Language Requirements
 
-**Current:**
+**Current (Phase 4):**
 - ✅ Modern Standard Arabic (MSA)
 - ✅ English
 
-**Future (Phase 5+):**
-- [ ] Egyptian Arabic
-- [ ] Gulf Arabic (Khaleeji)
-- [ ] Levantine Arabic
-- [ ] Maghrebi Arabic
+**Future:**
+- Egyptian Arabic
+- Gulf Arabic (Khaleeji)
+- Levantine Arabic
+- Maghrebi Arabic
 
 **Recommendation:** Use Whisper API for better dialect support once stable.
 
 ### Infrastructure
 
-**Hosting:**
+**Recommended Hosting:**
 - AWS UAE (Middle East - Bahrain) region
 - Or AWS EU (Frankfurt) for GDPR compliance
 - Target: <100ms latency from MENA
@@ -498,194 +362,89 @@ Phone Call → Telephony Provider → Streaming STT ⇄ RAG ⇄ AI ⇄ Streaming
 **Phone Numbers:**
 - Local providers: du, Etisalat (UAE)
 - Saudi Telecom Company (KSA)
-- Zain (Kuwait)
-- Ensure local caller ID for trust
-
-### Cultural Adaptations
-
-1. **Greeting Customization**
-   - "As-salamu alaykum" for Arabic
-   - Gender-specific voice options
-
-2. **Prayer Times**
-   - Reduce call volume during prayer times
-   - Automated messages during these periods
-
-3. **Ramadan Adjustments**
-   - Modified greeting during Ramadan
-   - Adjusted operating hours
-
-4. **Data Residency**
-   - Comply with local data laws
-   - Consider data sovereignty requirements
+- Verify regional support with chosen telephony platform
 
 ---
 
-## 💰 COST OPTIMIZATION STRATEGY
+## 💰 Cost Considerations
 
-### Current Cost Structure (Unoptimized)
+### Current Costs (Per 1000 Calls/Day)
+- Gemini 2.5 Flash: ~$30/month
+- Google Cloud STT: ~$480/month
+- Google Cloud TTS: ~$2,280/month
+- Supabase: ~$25/month
+- **Subtotal:** ~$2,815/month
 
-**For 1000 calls/day (5 min average, 500 words response):**
+### Additional Costs (Post-Phase 5)
+- Telephony platform: $50-90/month per 1000 calls
+- Phone numbers: $1-5/month per number
+- **Total Estimated:** ~$3,000/month for 1000 calls/day
 
-| Service | Cost | Monthly |
-|---------|------|---------|
-| Google STT | $0.016/min | $2,400 |
-| Google TTS | $16/1M chars | $240 |
-| Gemini API | $0.075/1M tokens | $150 |
-| **Total** | - | **$2,790** |
-
-### Optimization Targets
-
-**Target Monthly Cost:** $1,500 (46% reduction)
-
-**Strategies:**
-
-1. **Response Caching**
-   - Cache common questions (80% hit rate)
-   - Redis TTL: 24 hours
-   - Savings: ~$500/month
-
-2. **Shorter Responses**
-   - Target: 200 words vs 500
-   - Reduces TTS costs by 60%
-   - Savings: ~$150/month
-
-3. **Voice Provider Switch**
-   - Consider ElevenLabs ($0.30/1K chars)
-   - Better voice quality + lower cost
-   - Savings: ~$100/month
-
-4. **Batch Processing**
-   - Batch embeddings (5x faster)
-   - Reduce API calls
-   - Savings: ~$50/month
-
-5. **Smart Routing**
-   - FAQ bypass (no AI needed)
-   - Simple queries → cheaper models
-   - Savings: ~$200/month
-
-### Cost Monitoring Dashboard
-
-**Key Metrics:**
-- Daily spend by service
-- Cost per call
-- Token usage trends
-- TTS character count
-- Budget utilization (%)
-
-**Alerts:**
-- Daily spend > $150
-- Single call cost > $0.50
-- Monthly projection > $2,000
+### Cost Monitoring
+- ✅ Real-time tracking implemented (Phase 4)
+- ✅ Dashboard showing usage
+- ✅ Per-request cost breakdown
+- 🔜 Alert system (Phase 9)
+- 🔜 Budget caps (Phase 9)
 
 ---
 
-## 📊 SUCCESS METRICS
+## 📈 Success Metrics
 
-### Phase 4.1 (Bug Fixes)
-- [ ] 100% of documents tagged with language
-- [ ] Document management UI working
-- [ ] Chat history persists across sessions
-- [ ] Cost tracking dashboard live
+### Phase 5 (Telephony)
+- [ ] Live phone number operational
+- [ ] <500ms response latency
+- [ ] 0% dropped calls
+- [ ] 99% IVR success rate
+- [ ] English and Arabic both working
 
-### Phase 4.5 (Telephony)
-- [ ] Phone number receiving calls
-- [ ] <500ms average response latency
-- [ ] 95% call success rate
-- [ ] Arabic & English both working
-- [ ] 10 concurrent calls without issues
+### Phase 6 (Multi-User)
+- [ ] 1000+ concurrent users supported
+- [ ] <200ms session retrieval
+- [ ] 99.9% data persistence
+- [ ] Analytics dashboard operational
 
-### Phase 4D (Multi-User)
-- [ ] 1000+ user sessions stored
-- [ ] Conversation history retrieval <200ms
-- [ ] Analytics dashboard showing trends
-
-### Phase 4C (Human Handoff)
+### Phase 7 (Human Handoff)
 - [ ] 95% escalation accuracy
 - [ ] <30s average handoff time
-- [ ] Full context transferred to agents
+- [ ] 100% context transfer success
+- [ ] Agent satisfaction >4/5
 
-### Phase 4B (Tool Use)
+### Phase 8 (Tool Use)
 - [ ] 5+ tools integrated
-- [ ] 99% function execution success
-- [ ] Audit logs capturing all actions
+- [ ] 99% execution success rate
+- [ ] 100% audit coverage
+- [ ] 0 unauthorized actions
 
-### Phase 4E (Production)
-- [ ] 99.9% uptime
+### Phase 9 (Production)
+- [ ] 99.9% uptime achieved
 - [ ] <500ms p95 latency
-- [ ] $1,500/month operating costs
-- [ ] Zero security incidents
+- [ ] 0 security incidents
+- [ ] CI/CD pipeline operational
 
 ---
 
-## 🎯 IMMEDIATE NEXT STEPS
+## 🚀 Launch Readiness Checklist
 
-### This Week (Week 1)
-
-**Monday-Tuesday:** Fix language ingestion bug
-- Update `app/api/ingest/route.ts`
-- Add language selector to ingestion form
-- Test bilingual uploads
-
-**Wednesday:** Add document management
-- Create document list component
-- Build delete API endpoint
-- Test CRUD operations
-
-**Thursday:** Cost monitoring
-- Create `lib/cost-monitor.ts`
-- Add tracking to all API routes
-- Build simple dashboard
-
-**Friday:** Session persistence + Git commit
-- Implement localStorage fallback
-- Update PROJECT_HANDOVER.md
-- Commit all changes
-
-### Next Week (Week 2)
-
-**Monday-Wednesday:** Telephony research
-- Sign up for VAPI trial
-- Test Arabic voice quality
-- Evaluate Twilio comparison
-- Prototype webhook integration
-
-**Thursday:** Decision day
-- Choose VAPI vs Twilio vs Retell
-- Get approval for platform
-- Set up account
-
-**Friday:** Begin integration
-- Provision phone number
-- Configure basic IVR
-- First test call
-
----
-
-## 🚀 LAUNCH READINESS CHECKLIST
-
-### Before Going Live
-
-**Technical:**
-- [ ] All bugs fixed (Phase 4.1)
-- [ ] Phone calls working (Phase 4.5)
-- [ ] Multi-user support (Phase 4D)
-- [ ] Human handoff ready (Phase 4C)
-- [ ] Production hardened (Phase 4E)
+### Technical Requirements
+- [ ] All bugs fixed (Phase 4) ✅
+- [ ] Phone calls working (Phase 5)
+- [ ] Multi-user support (Phase 6)
+- [ ] Human handoff ready (Phase 7)
+- [ ] Production hardened (Phase 9)
 - [ ] Load tested (100 concurrent calls)
 - [ ] Security audit passed
-- [ ] Monitoring & alerts configured
+- [ ] Monitoring configured
 
-**Business:**
+### Business Requirements
 - [ ] Phone numbers provisioned
 - [ ] Human agents trained
-- [ ] Escalation procedures defined
+- [ ] Escalation procedures documented
 - [ ] SLA agreements in place
 - [ ] Cost budget approved
 - [ ] Legal compliance verified
 
-**MENA-Specific:**
+### MENA-Specific
 - [ ] Local phone numbers acquired
 - [ ] Arabic voice quality validated
 - [ ] Cultural customizations implemented
@@ -694,7 +453,7 @@ Phone Call → Telephony Provider → Streaming STT ⇄ RAG ⇄ AI ⇄ Streaming
 
 ---
 
-## 📚 REFERENCES & RESOURCES
+## 📚 Key Resources
 
 ### Telephony Platforms
 - [VAPI.ai Documentation](https://docs.vapi.ai)
@@ -722,6 +481,11 @@ Phone Call → Telephony Provider → Streaming STT ⇄ RAG ⇄ AI ⇄ Streaming
 
 **End of Strategic Roadmap**
 
-*This document serves as the master plan for building a production-ready AI voice agent that receives and handles customer phone calls. Follow phases sequentially for best results.*
+*This roadmap provides the strategic direction for building a production-ready AI voice agent. Follow phases sequentially for best results.*
 
-*Last Updated: November 8, 2025 | Audited by Claude Sonnet 4.5*
+**For detailed implementation guidance, see [`PROJECT_HANDOVER.md`](PROJECT_HANDOVER.md:1)**
+
+---
+
+**Last Updated:** November 10, 2025
+**Status:** Phases 1-4 Complete, Ready for Phase 5
