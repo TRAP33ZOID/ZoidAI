@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mic, Square, Volume2, Globe, Copy } from "lucide-react";
+import { Mic, Square, Volume2, Globe, Copy, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { getLanguageOptions, getDefaultLanguage } from "@/lib/language";
 import { costMonitor } from "@/lib/cost-monitor";
@@ -35,6 +35,7 @@ export function ChatInterface() {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
+  const languageSelectRef = useRef<HTMLSelectElement | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -288,9 +289,99 @@ export function ChatInterface() {
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard!");
+  const clearConversation = () => {
+    // Stop any active recording
+    if (isRecording) {
+      stopRecording();
+    }
+    
+    // Clear all state
+    setMessages([]);
+    setInput("");
+    setPendingAudioBlob(null);
+    setIsLoading(false);
+    
+    // Clear localStorage
+    localStorage.removeItem(STORAGE_KEY);
+    
+    toast.success("Conversation cleared!");
+  };
+
+  const copyConversation = () => {
+    if (messages.length === 0) {
+      toast.error("No conversation to copy!");
+      return;
+    }
+
+    const conversationText = messages
+      .map((msg) => {
+        const sender = msg.sender === "user" ? "You" : "AI";
+        return `${sender}: ${msg.text}`;
+      })
+      .join("\n\n");
+
+    navigator.clipboard.writeText(conversationText);
+    toast.success("Conversation copied to clipboard!");
+  };
+
+  const handleLanguageChange = (newLanguage: string) => {
+    // If there are messages or input, prompt for confirmation
+    if (messages.length > 0 || input.trim()) {
+      // Show a cute confirmation toast with custom content
+      toast.custom(
+        (t) => (
+          <div className="flex flex-col gap-3 p-4 bg-background border rounded-lg shadow-lg min-w-[300px]">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🌍</span>
+              <div className="flex flex-col">
+                <p className="font-semibold">Change Language?</p>
+                <p className="text-sm text-muted-foreground">
+                  This will clear your current conversation.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  toast.dismiss(t);
+                  // Force select to revert to current language
+                  if (languageSelectRef.current) {
+                    languageSelectRef.current.value = currentLanguage;
+                  }
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  toast.dismiss(t);
+                  // Clear the conversation before changing language
+                  clearConversation();
+                  // Change the language
+                  setCurrentLanguage(newLanguage);
+                  toast.success("Language changed! 🌍");
+                }}
+              >
+                Yes, change it
+              </Button>
+            </div>
+          </div>
+        ),
+        {
+          duration: Infinity, // Keep it open until user responds
+        }
+      );
+      
+      // Don't change the language yet - wait for user confirmation
+      // The select will revert since currentLanguage state hasn't changed
+      return;
+    }
+    
+    // Change the language directly if there's nothing to clear
+    setCurrentLanguage(newLanguage);
   };
 
   const MessageBubble = ({ message }: { message: Message }) => (
@@ -318,15 +409,6 @@ export function ChatInterface() {
               Play Audio
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => copyToClipboard(message.text)}
-            className="h-8 opacity-0 group-hover:opacity-100 transition-opacity"
-            title="Copy message to clipboard"
-          >
-            <Copy className="w-4 h-4" />
-          </Button>
         </div>
       </div>
     </div>
@@ -340,10 +422,33 @@ export function ChatInterface() {
         <div className="flex justify-between items-center">
           <CardTitle>🎙️ Zoid AI Support Agent (Voice-Enabled)</CardTitle>
           <div className="flex items-center space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={copyConversation}
+              disabled={messages.length === 0}
+              title="Copy entire conversation"
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Conversation
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={clearConversation}
+              disabled={messages.length === 0 && !input.trim()}
+              title="Clear entire conversation"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Clear
+            </Button>
             <Globe className="w-4 h-4" />
             <select
+              ref={languageSelectRef}
               value={currentLanguage}
-              onChange={(e) => setCurrentLanguage(e.target.value)}
+              onChange={(e) => handleLanguageChange(e.target.value)}
               className="px-3 py-1 border rounded-md text-sm"
             >
               {languageOptions.map((lang) => (

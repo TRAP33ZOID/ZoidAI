@@ -6,11 +6,13 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Database } from "lucide-react";
 import { toast } from "sonner";
 import { documentRefreshEmitter } from "@/lib/document-context";
+import { getLanguageConfig } from "@/lib/language";
 
 interface Document {
   id: number;
@@ -84,9 +86,13 @@ export function DocumentList() {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto mb-8">
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>📂 Knowledge Base Documents ({documents.length})</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Database className="h-5 w-5" />
+          Knowledge Base Documents ({documents.length})
+        </CardTitle>
+        <CardDescription>Manage your knowledge base documents</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -111,7 +117,7 @@ export function DocumentList() {
                     <td className="py-3 px-4 font-medium">{doc.filename}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                        {doc.language === 'en-US' ? 'English' : 'العربية'}
+                        {getLanguageConfig(doc.language).name}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-gray-600 text-xs max-w-xs truncate">

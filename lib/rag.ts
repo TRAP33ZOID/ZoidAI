@@ -1,16 +1,24 @@
-import { ai, EMBEDDING_MODEL } from "./gemini";
+import { ai, EMBEDDING_MODEL, withRetry } from "./gemini";
 import { supabase, DOCUMENTS_TABLE } from "./supabase";
 
 /**
  * Embeds a single text string using the Gemini embedding model.
+ * Includes retry logic for handling transient API errors (503, etc.).
  * @param text The text to embed.
  * @returns A promise that resolves to the embedding vector (number[]).
  */
 async function embedText(text: string): Promise<number[]> {
-  const response = await ai.models.embedContent({
-    model: EMBEDDING_MODEL,
-    contents: [text], // Use 'contents' array
-  });
+  const response = await withRetry(
+    async () => {
+      return await ai.models.embedContent({
+        model: EMBEDDING_MODEL,
+        contents: [text], // Use 'contents' array
+      });
+    },
+    3,
+    "Embedding generation"
+  );
+
   // The response contains an array of embeddings, we take the first one.
   const embedding = response.embeddings?.[0]?.values;
   if (!embedding) {

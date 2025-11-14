@@ -77,64 +77,121 @@ Phone Call → Telephony → Streaming STT ⇄ RAG ⇄ AI ⇄ Streaming TTS → 
 
 ## 🚀 Remaining Phases
 
-### Phase 5: Telephony Integration 🔜 NEXT
+### Phase 5: Telephony Integration 🚧 IN PROGRESS
 
 **Goal:** Enable real phone calls with streaming audio
 
-**The Challenge:**
-Current system uses batch processing (3-7s latency). Need continuous streaming (<500ms latency) with phone number provisioning and IVR.
+**Current Status:**
+- ✅ Phone number provisioned: **+1 (510) 370 5981**
+- ✅ Vapi integration started
+- ✅ Webhook endpoint: `app/api/vapi-webhook/route.ts`
+- ✅ Server function endpoint: `app/api/vapi-function/route.ts`
+- ⚠️ **BLOCKER:** Vapi tool creation failing (server-side error)
+- ⚠️ **WORKAROUND:** Using Vapi's built-in RAG temporarily
+- 📋 **TODO:** Dashboard analytics implementation
 
 **Key Features:**
-- Phone number provisioning
-- IVR language selection menu
-- Streaming STT/TTS pipeline
-- WebSocket or Server-Sent Events integration
-- Low-latency RAG retrieval (<200ms)
-- Call routing and management
+- ✅ Phone number provisioning
+- ⏳ IVR language selection menu (pending Vapi fix)
+- ✅ Streaming STT/TTS pipeline (handled by Vapi)
+- ✅ Webhook integration
+- ⏳ Low-latency RAG retrieval (<200ms) - blocked by tool creation
+- ⏳ Call routing and management dashboard
 
 **Implementation Approach:**
 
-1. **Select Telephony Platform**
-   
-   **Recommended: VAPI.ai**
-   - Built for AI voice agents
-   - Real-time streaming built-in
-   - Pre-integrated STT/TTS
-   - Strong Arabic support
-   - Webhook integration
-   - Fastest implementation
-   
-   **Alternatives:**
-   - Retell AI (similar to VAPI)
-   - Twilio (more complex, more flexible)
-   - Bland.ai (outbound focus)
+1. **Telephony Platform: VAPI.ai** ✅ SELECTED
+   - Phone number: +1 (510) 370 5981
+   - Webhook: `/api/vapi-webhook`
+   - Server function: `/api/vapi-function` (not connected yet)
+   - **Issue:** Tool creation error prevents Supabase RAG connection
+   - **Workaround:** Using Vapi's knowledge base upload feature
 
-2. **Phone Number & IVR**
-   - Provision phone number
-   - Configure language selection IVR
-   - Set up call routing
-   - Test incoming calls
+2. **Phone Number & IVR** ✅ PARTIAL
+   - ✅ Phone number provisioned
+   - ⏳ IVR configuration (pending tool fix)
 
-3. **Streaming Pipeline**
-   - Replace batch API with streaming
-   - Implement WebSocket/SSE endpoints
-   - Real-time STT integration
-   - Streaming TTS responses
-   - State management for calls
+3. **Backend Endpoints** ✅ COMPLETE
+   - ✅ `app/api/vapi-webhook/route.ts` - Receives call events
+   - ✅ `app/api/vapi-function/route.ts` - Generates AI responses (ready, not connected)
 
-4. **Backend Modifications**
-   - Create webhook endpoint (e.g., `app/api/vapi-webhook/route.ts`)
-   - Optimize [`lib/rag.ts`](lib/rag.ts:1) for low latency
-   - Add streaming response handling
-   - Implement conversation state tracking
+4. **Dashboard Analytics** 📋 TODO
+   See detailed requirements in PROJECT_HANDOVER.md Phase 5 section
 
 **Success Criteria:**
-- Live phone number receives calls
-- IVR language selection works
-- AI responds in real-time
-- Response latency <500ms
-- English and Arabic both work
-- No dropped calls or audio issues
+- ✅ Live phone number receiving calls
+- ⏳ IVR with language selection (pending)
+- ✅ AI responds in real-time (via Vapi RAG)
+- ⏳ Response latency <500ms (needs Supabase RAG)
+- ✅ English and Arabic support (via Vapi knowledge base)
+- 📋 Dashboard showing call analytics (to be implemented)
+
+---
+
+### Phase 5B: Dashboard Analytics Implementation 📋 NEXT
+
+**Goal:** Build comprehensive dashboard for monitoring calls, analytics, and system health
+
+**Required Dashboard Components:**
+
+1. **Call Analytics Dashboard**
+   - Total calls (today/week/month)
+   - Average call duration
+   - Calls by language breakdown
+   - Call status distribution
+   - Peak call times visualization
+   - Call volume trends (charts)
+
+2. **Phone Integration Status**
+   - Vapi connection status
+   - Phone number display
+   - Last call timestamp
+   - Webhook health monitoring
+   - Endpoint status checks
+
+3. **Call Logs Interface**
+   - Recent calls table
+   - Call details (ID, duration, language, status)
+   - Conversation transcripts
+   - Filtering and search
+   - Export functionality
+
+4. **Response Quality Metrics**
+   - Average response times
+   - RAG success rates
+   - Answer vs "don't know" ratio
+   - Top questions analysis
+   - Language distribution
+
+5. **Enhanced Cost Tracking**
+   - Vapi costs integration
+   - Cost per call calculation
+   - Monthly projections
+   - Budget alerts
+
+6. **Knowledge Base Analytics**
+   - Document statistics
+   - Language distribution
+   - Most referenced content
+   - Coverage metrics
+
+**Implementation Priority:**
+- Phase 1: Call Analytics + Phone Status (quick wins)
+- Phase 2: Call Logs + Quality Metrics
+- Phase 3: Enhanced Cost Tracking + KB Stats
+
+**Files to Create:**
+- `components/call-analytics.tsx`
+- `components/phone-status.tsx`
+- `components/call-logs.tsx`
+- `components/response-quality.tsx`
+- `lib/call-tracker.ts`
+- `app/api/calls/route.ts`
+
+**Data Storage:**
+- Use Phase 6 database schema for call logs
+- Track webhook events in database
+- Aggregate metrics for dashboard
 
 ---
 
@@ -487,5 +544,5 @@ export const tools = {
 
 ---
 
-**Last Updated:** November 10, 2025
-**Status:** Phases 1-4 Complete, Ready for Phase 5
+**Last Updated:** December 2025
+**Status:** Phase 5 In Progress - Vapi Integration Started, Dashboard Analytics Pending

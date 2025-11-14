@@ -1,6 +1,6 @@
 # 🎙️ Zoid AI Support Agent
 
-A production-ready, bilingual (English/Arabic) voice-enabled AI customer support agent built with Next.js, featuring real-time speech interaction and RAG-powered knowledge retrieval.
+A bilingual (English/Arabic) voice-enabled AI customer support agent built with Next.js, featuring real-time speech interaction and RAG-powered knowledge retrieval. **Note:** Currently in development - feature phases complete, infrastructure phases required for production MVP.
 
 ## ✨ Features
 
@@ -10,7 +10,9 @@ A production-ready, bilingual (English/Arabic) voice-enabled AI customer support
 - 🎯 **Language-Aware Retrieval**: Automatic language filtering for context accuracy
 - 📝 **Text & Voice Chat**: Seamless switching between text and voice input
 - 🔄 **RTL Support**: Right-to-left text rendering for Arabic
-- 📊 **Comprehensive Logging**: Built-in diagnostic infrastructure for monitoring
+- 📊 **Call Analytics**: Comprehensive call logging, statistics, and quality monitoring
+- 🔄 **Error Recovery**: Retry logic, circuit breaker pattern, and graceful degradation
+- 📞 **Telephony Integration**: Real phone call support via Vapi.ai
 
 ## 🛠️ Tech Stack
 
@@ -101,67 +103,22 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 
 ### 5. Configure Supabase Database
 
-#### 5.1 Create the Documents Table
+**Recommended:** Use the complete database setup script (`supabase-setup.sql`) which includes all tables, functions, and indexes.
 
-Run this SQL in your Supabase SQL Editor:
+#### Option 1: Complete Setup (Recommended)
 
-```sql
--- Enable pgvector extension
-CREATE EXTENSION IF NOT EXISTS vector;
+1. Open the `supabase-setup.sql` file in your project
+2. Copy the entire contents
+3. Run it in your Supabase SQL Editor
+4. This script is idempotent (safe to run multiple times)
 
--- Create documents table
-CREATE TABLE documents (
-  id BIGSERIAL PRIMARY KEY,
-  content TEXT NOT NULL,
-  embedding vector(768),
-  metadata JSONB DEFAULT '{}',
-  language VARCHAR(10) DEFAULT 'en-US',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+#### Option 2: Manual Setup
 
--- Create index for vector similarity search
-CREATE INDEX ON documents USING ivfflat (embedding vector_cosine_ops)
-  WITH (lists = 100);
-
--- Create index for language filtering
-CREATE INDEX idx_documents_language ON documents(language);
-```
-
-#### 5.2 Create the Match Documents Function
-
-Run this SQL in your Supabase SQL Editor:
-
-```sql
-CREATE OR REPLACE FUNCTION match_documents(
-  query_embedding vector(768),
-  match_count int,
-  language varchar DEFAULT 'en-US',
-  filter jsonb DEFAULT '{}'
-)
-RETURNS TABLE (
-  id bigint,
-  content text,
-  metadata jsonb,
-  similarity float
-)
-LANGUAGE plpgsql
-AS $$
-#variable_conflict use_column
-BEGIN
-  RETURN query
-  SELECT
-    id,
-    content,
-    metadata,
-    1 - (documents.embedding <=> query_embedding) AS similarity
-  FROM documents
-  WHERE documents.language = match_documents.language
-    AND metadata @> filter
-  ORDER BY documents.embedding <=> query_embedding
-  LIMIT match_count;
-END;
-$$;
-```
+If you prefer to set up manually, see the SQL snippets in `PROJECT_STATE.md` or the `supabase-setup.sql` file for the complete schema including:
+- `documents` table with pgvector support
+- `call_logs` table for call tracking
+- `match_documents()` RPC function for RAG
+- All necessary indexes and triggers
 
 ### 6. Upload Sample Knowledge Base (Optional)
 
@@ -198,13 +155,19 @@ zoiddd/
 │   ├── api/
 │   │   ├── chat/          # Text chat endpoint
 │   │   ├── voice/         # Voice interaction endpoint
-│   │   └── ingest/        # Document ingestion endpoint
+│   │   ├── ingest/        # Document ingestion endpoint
+│   │   ├── calls/         # Call logs API
+│   │   ├── vapi-webhook/  # Vapi webhook handler
+│   │   └── vapi-function/ # Vapi server function (Supabase RAG)
 │   ├── globals.css        # Global styles
 │   ├── layout.tsx         # Root layout
 │   └── page.tsx           # Home page
 ├── components/
 │   ├── chat-interface.tsx # Main chat UI component
 │   ├── ingestion-form.tsx # Document upload component
+│   ├── call-dashboard.tsx # Call statistics dashboard
+│   ├── admin-dashboard.tsx # Admin dashboard
+│   ├── cost-dashboard.tsx # Cost monitoring dashboard
 │   └── ui/                # shadcn/ui components
 ├── lib/
 │   ├── gemini.ts          # Gemini AI client
@@ -212,10 +175,14 @@ zoiddd/
 │   ├── rag.ts             # RAG retrieval logic
 │   ├── supabase.ts        # Supabase client
 │   ├── language.ts        # Language configuration
+│   ├── call-handler.ts    # Call state management & logging
+│   ├── call-monitor.ts    # Call quality monitoring
+│   ├── vapi.ts            # Vapi integration helpers
 │   └── google-cloud-key.json # (YOU MUST CREATE THIS)
 ├── knowledge-bases/       # Sample knowledge base files
+├── scripts/               # Test and diagnostic scripts
 ├── .env.local            # (YOU MUST CREATE THIS)
-└── PROJECT_HANDOVER.md   # Comprehensive technical documentation
+└── PROJECT_STATE.md      # Current implementation status
 ```
 
 ## 🎯 Usage
@@ -240,13 +207,16 @@ zoiddd/
 
 ## 📚 Documentation
 
-- **[PROJECT_HANDOVER.md](PROJECT_HANDOVER.md)** - Comprehensive technical documentation including:
-  - Complete development history (Phases 1-4A)
-  - Architecture decisions
-  - System dependencies
-  - Known constraints
-  - Future roadmap (Phases 4B-4E)
-  - Testing protocols
+**Current Documentation:**
+- **[PROJECT_STATE.md](PROJECT_STATE.md)** - AI Agent Handover - Current implementation status, technical details, and next steps (UPDATED)
+- **[BUSINESS_STRATEGY.md](BUSINESS_STRATEGY.md)** - Business strategy, go-to-market plan, pricing, and customer discovery
+- **[TESTING.md](TESTING.md)** - Testing documentation and verification procedures
+
+**Archived Documentation:**
+- `archive/ROADMAP.md` - Original technical roadmap (archived)
+- `archive/PROJECT_HANDOVER.md` - Original technical handover document (archived)
+- `archive/z-composer/` - Previous strategic planning documents
+- `archive/z-sonnet/` - Previous project handover documents
 
 ## 🔐 Security Notes
 
@@ -275,19 +245,74 @@ These are already in `.gitignore`, but always double-check before committing.
 
 ### Database Connection Issues
 - Verify Supabase URL and keys in `.env.local`
-- Check that the `documents` table exists
+- Check that the `documents` and `call_logs` tables exist
 - Ensure pgvector extension is enabled
+- Run `npm run check:db` to verify database setup
+
+### Call Logging Issues
+- Verify `call_logs` table exists in Supabase
+- Check webhook endpoint is accessible (for Vapi integration)
+- Review server logs for detailed error messages
+- Test with `npm run test:calls` (if available)
 
 ## 📊 Current Status
 
-- ✅ Phase 1: Core RAG Chat Implementation
-- ✅ Phase 2: Persistent Knowledge Base & Ingestion
-- ✅ Phase 3: Voice Integration
-- ✅ Phase 4A: Arabic Language Support (VERIFIED)
-- 🚧 Phase 4B: Tool Use / Function Calling (Planned)
-- 🚧 Phase 4C: Human Handoff System (Planned)
-- 🚧 Phase 4D: Multi-Session Management (Planned)
-- 🚧 Phase 4E: Production Hardening (Planned)
+### ✅ Completed Feature Phases
+
+- ✅ **Phase 1:** Core RAG Chat Implementation
+- ✅ **Phase 2:** Persistent Knowledge Base & Ingestion
+- ✅ **Phase 3:** Voice Integration
+- ✅ **Phase 4:** Arabic Language Support (Bilingual UI, RTL, language-aware RAG)
+- ✅ **Phase 5:** Telephony Integration
+  - Phone number provisioned: +1 (510) 370 5981
+  - Vapi webhook and server function endpoints created
+  - ⚠️ **Note:** Vapi tool creation blocker (using built-in RAG temporarily)
+- 🚧 **Phase 6:** Basic Call Handling & Vapi Metrics Tracking (IN PROGRESS)
+  - ✅ Call logging and state management complete
+  - ✅ Call statistics API and dashboard
+  - ✅ Error recovery and monitoring
+  - ⏳ Vapi metrics extraction pending
+- ✅ **Phase 7:** Error Recovery & Monitoring
+  - ✅ Retry logic and circuit breaker pattern
+  - ✅ Call quality monitoring and health scoring
+  - ✅ Comprehensive call statistics dashboard
+
+### 🚧 Infrastructure Phases Required for Real MVP
+
+**CRITICAL:** Phases 1-7 are feature-complete but the product is NOT production-ready yet. The app:
+- ❌ Only runs locally (`npm run dev`)
+- ❌ Uses a single shared database (no multi-tenancy)
+- ❌ Has no user authentication
+- ❌ Has no payment system
+- ❌ Cannot be accessed from the internet
+- ❌ Cannot provision phone numbers per customer
+
+**Real MVP requires:**
+- 🚧 Phase 8: Deployment & Internet Access
+- 🚧 Phase 9: Multi-Tenancy & Data Isolation
+- 🚧 Phase 10: User Authentication & Sign-Up
+- 🚧 Phase 11: Payment Integration & Usage Tracking
+- 🚧 Phase 12: Per-Tenant Phone Number Provisioning
+- 🚧 Phase 13: Basic Admin Panel & Email Notifications
+
+See **[PROJECT_STATE.md](PROJECT_STATE.md)** for detailed phase descriptions and requirements.
+
+## ⚠️ Known Issues & Limitations
+
+**Vapi Integration:**
+- Server function tool creation fails with "An error occurred while updating the tool" - This is a Vapi platform issue, not our code
+- Currently using Vapi's built-in knowledge base as temporary workaround
+- Supabase RAG endpoint (`/api/vapi-function`) is ready but not connected due to tool creation blocker
+- Once Vapi resolves the issue, we can switch to Supabase RAG for full control
+
+**Production Readiness:**
+- ⚠️ **Not Production-Ready:** This is a development demo. See "Infrastructure Phases Required for Real MVP" above.
+- The app requires deployment, multi-tenancy, authentication, payments, and per-tenant phone provisioning before customers can use it independently.
+
+**Next Steps:**
+1. Complete Phase 6: Vapi metrics extraction
+2. Monitor Vapi for tool creation fix
+3. Begin infrastructure phases (8-13) for real MVP
 
 ## 📝 License
 

@@ -145,6 +145,101 @@ Latency: <500ms | Type: CONTINUOUS STREAMING
 - ✅ <500ms response latency
 - ✅ Arabic and English support verified
 
+### ⚠️ Current Phase 5 Status Update
+
+**What's Done:**
+- ✅ Phone number provisioned: **+1 (510) 370 5981**
+- ✅ Vapi account configured
+- ✅ Webhook endpoint: `app/api/vapi-webhook/route.ts` (receives call events)
+- ✅ Server function endpoint: `app/api/vapi-function/route.ts` (ready for Supabase RAG)
+- ✅ Knowledge base files uploaded to Vapi: `sample-en.txt`, `sample-ar.txt`
+
+**Current Blocker:**
+- ⚠️ **Vapi Tool Creation Error:** When creating API Request tool in Vapi dashboard, error: "An error occurred while updating the tool" - This is a Vapi server-side issue
+- ⚠️ **Workaround:** Using Vapi's built-in RAG/knowledge base temporarily instead of Supabase RAG
+
+**Configuration Details:**
+- Webhook URL: `https://eliana-hyperdulical-wamblingly.ngrok-free.dev/api/vapi-webhook`
+- Server Function URL: `https://eliana-hyperdulical-wamblingly.ngrok-free.dev/api/vapi-function` (not connected yet)
+- System Prompt configured in Vapi Assistant
+- First Message: "Hello! Welcome to Zoid AI Support. How can I assist you today?"
+
+**Next Steps:**
+1. Monitor Vapi for tool creation fix
+2. Once fixed, connect Supabase RAG via API Request tool
+3. Implement dashboard analytics (see requirements below)
+
+### Dashboard Analytics Requirements (TO BE IMPLEMENTED)
+
+**All dashboard features matter - implementation priority:**
+
+**Priority 1 - Call Analytics:**
+- Total calls today/week/month
+- Average call duration
+- Calls by language (English vs Arabic)
+- Call status breakdown (completed, failed, abandoned)
+- Peak call times (hourly/daily patterns)
+- Call volume trends over time
+
+**Priority 2 - Phone Integration Status:**
+- Vapi connection status (connected/disconnected)
+- Phone number display: +1 (510) 370 5981
+- Last call received timestamp
+- Webhook health status (last successful webhook)
+- Server function endpoint status
+
+**Priority 3 - Call Logs:**
+- Recent calls list: Call ID, Duration, Language, Timestamp, Status
+- Conversation transcript viewing
+- Filter by date range, language, status
+- Search functionality
+
+**Priority 4 - Response Quality Metrics:**
+- Average response time (RAG + AI generation)
+- RAG retrieval success rate
+- Questions answered vs "I don't know" responses
+- Most common questions (top 10)
+- Response accuracy score
+- Language distribution of queries
+
+**Priority 5 - Enhanced API Costs:**
+- Current: Gemini/STT/TTS costs ✅
+- Add: Vapi costs (if tracked)
+- Cost per call calculation
+- Projected monthly costs
+- Cost breakdown by service
+- Budget alerts and thresholds
+
+**Priority 6 - Knowledge Base Stats:**
+- Total documents count
+- Documents by language breakdown
+- Most referenced documents (from RAG logs)
+- Knowledge base coverage score
+- Document update frequency
+- Embedding generation stats
+
+**Priority 7 - Quick Actions:**
+- Test call button
+- View Vapi dashboard link
+- Integration settings
+- Phone number management
+- Knowledge base sync status (Vapi vs Supabase)
+
+**Implementation Files Needed:**
+- `components/call-analytics.tsx` - Call statistics and charts
+- `components/phone-status.tsx` - Integration status card
+- `components/call-logs.tsx` - Call history table
+- `components/response-quality.tsx` - Quality metrics
+- `lib/call-tracker.ts` - Track calls from webhooks
+- `app/api/calls/route.ts` - API for call data
+- Database schema for call logs (see Phase 6)
+
+**Data Collection Strategy:**
+- Webhook endpoint receives call events → store in database
+- Track response times from `/api/vapi-function` logs
+- Aggregate metrics for dashboard display
+- Use Phase 6 database schema for persistence
+
 ---
 
 ## 🗺️ Complete Project Roadmap
@@ -440,6 +535,7 @@ Must create custom RPC function `match_documents()` in Supabase SQL editor (see 
 3. **Documentation:** Keep this PROJECT_HANDOVER.md updated with progress.
 4. **Mode Switching:** Switch to appropriate mode before major tasks.
 5. **Baby Steps:** Make incremental changes; test each step before proceeding.
+6. **File Creation:** Do NOT create .md files unless explicitly asked by the user. Answer questions directly without creating documentation files.
 
 ---
 
@@ -545,6 +641,6 @@ If the context does not contain the answer, you MUST politely state that you do 
 
 ---
 
-**Last Updated:** November 10, 2025
-**Version:** 4.0
-**Status:** Ready for Phase 5 - Telephony Integration
+**Last Updated:** December 2025
+**Version:** 5.0
+**Status:** Phase 5 In Progress - Vapi Integration Started, Dashboard Pending

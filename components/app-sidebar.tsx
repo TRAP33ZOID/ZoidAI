@@ -2,24 +2,17 @@
 
 import * as React from "react"
 import {
-  IconCamera,
   IconChartBar,
   IconDashboard,
   IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
+  IconFileText,
   IconHelp,
   IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
+  IconPhone,
   IconSettings,
-  IconUsers,
+  IconTestPipe,
 } from "@tabler/icons-react"
 
-import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
@@ -35,8 +28,8 @@ import {
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: "Admin",
+    email: "admin@zoid.ai",
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
@@ -44,74 +37,31 @@ const data = {
       title: "Dashboard",
       url: "#",
       icon: IconDashboard,
+      section: "dashboard",
     },
     {
-      title: "Lifecycle",
+      title: "Calls",
       url: "#",
-      icon: IconListDetails,
+      icon: IconPhone,
+      section: "calls",
+    },
+    {
+      title: "Documents",
+      url: "#",
+      icon: IconFileText,
+      section: "documents",
     },
     {
       title: "Analytics",
       url: "#",
       icon: IconChartBar,
+      section: "analytics",
     },
     {
-      title: "Projects",
+      title: "Testing",
       url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      icon: IconTestPipe,
+      section: "testing",
     },
   ],
   navSecondary: [
@@ -121,36 +71,21 @@ const data = {
       icon: IconSettings,
     },
     {
-      title: "Get Help",
+      title: "Help",
       url: "#",
       icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
     },
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  activeSection,
+  onNavigate,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  activeSection?: string
+  onNavigate?: (section: string) => void
+}) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -162,15 +97,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="#">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">Zoid AI</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
+        <NavMain
+          items={data.navMain}
+          activeSection={activeSection}
+          onNavigate={onNavigate}
+        />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

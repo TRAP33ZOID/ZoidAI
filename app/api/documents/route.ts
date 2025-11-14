@@ -5,17 +5,29 @@ export async function GET(req: Request) {
   try {
     const { data, error } = await supabase
       .from(DOCUMENTS_TABLE)
-      .select('id, content, metadata, language');
+      .select('id, content, metadata, language, created_at')
+      .order('created_at', { ascending: false });
     
     if (error) throw error;
     
+    // Group documents by filename to show unique documents
+    const documentMap = new Map<string, any>();
+    
+    data.forEach(doc => {
+      const filename = doc.metadata?.filename || 'Unknown';
+      if (!documentMap.has(filename)) {
+        documentMap.set(filename, {
+          id: doc.id,
+          preview: doc.content.substring(0, 100) + '...',
+          filename: filename,
+          language: doc.language || 'en-US',
+          created_at: doc.created_at
+        });
+      }
+    });
+    
     return NextResponse.json({
-      documents: data.map(doc => ({
-        id: doc.id,
-        preview: doc.content.substring(0, 100) + '...',
-        filename: doc.metadata?.filename || 'Unknown',
-        language: doc.language
-      })).reverse(),
+      documents: Array.from(documentMap.values()),
       total: data.length
     });
   } catch (error) {

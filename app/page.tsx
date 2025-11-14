@@ -1,32 +1,42 @@
+"use client";
+
+import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar"
-import { ChatInterface } from "@/components/chat-interface"
-import { IngestionForm } from "@/components/ingestion-form"
-import { DocumentList } from "@/components/document-list"
-import { CostDashboard } from "@/components/cost-dashboard"
+import { AdminDashboard } from "@/components/admin-dashboard"
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
 
 export default function Page() {
+  const [activeSection, setActiveSection] = useState<string>("dashboard");
+
+  const handleNavigate = (section: string) => {
+    setActiveSection(section);
+  };
+
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <div className="flex flex-1 flex-col items-center p-4 overflow-y-auto">
-          <IngestionForm />
-          <DocumentList />
-          <CostDashboard />
-          <ChatInterface />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="h-full">
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "calc(var(--spacing) * 72)",
+            "--header-height": "calc(var(--spacing) * 12)",
+          } as React.CSSProperties
+        }
+      >
+        <AppSidebar
+          variant="inset"
+          activeSection={activeSection}
+          onNavigate={handleNavigate}
+        />
+        <SidebarInset>
+          <AdminDashboard
+            activeSection={activeSection}
+            onNavigate={handleNavigate}
+          />
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
   )
 }

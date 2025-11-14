@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { ai, CHAT_MODEL } from "@/lib/gemini";
+import { ai, CHAT_MODEL, withRetry } from "@/lib/gemini";
 import { retrieveContext } from "@/lib/rag";
-import { getDefaultLanguage, isValidLanguage } from "@/lib/language";
+import { getDefaultLanguage, isValidLanguage, getSystemInstruction } from "@/lib/language";
 
 export async function POST(req: Request) {
   try {
@@ -18,25 +18,30 @@ export async function POST(req: Request) {
     const context = contextChunks.join("\n---\n");
 
     // 2. Augmentation and Generation Step
-    const systemInstruction = `You are Zoid AI Support Agent, a helpful and friendly customer service representative.
-    Your goal is to answer the user's question based ONLY on the provided context.
-    If the context does not contain the answer, state clearly that you cannot find the information.
-    
-    CONTEXT:
-    ---
-    ${context}
-    ---
-    `;
+    const baseSystemInstruction = getSystemInstruction(language);
+    const systemInstruction = `${baseSystemInstruction}
 
-    const response = await ai.models.generateContent({
-      model: CHAT_MODEL,
-      contents: [
-        { role: "user", parts: [{ text: query }] }
-      ],
-      config: {
-        systemInstruction: systemInstruction,
+CONTEXT:
+---
+${context}
+---
+`;
+
+    const response = await withRetry(
+      async () => {
+        return await ai.models.generateContent({
+          model: CHAT_MODEL,
+          contents: [
+            { role: "user", parts: [{ text: query }] }
+          ],
+          config: {
+            systemInstruction: systemInstruction,
+          },
+        });
       },
-    });
+      3,
+      "Content generation"
+    );
 
     const textResponse = response.text;
 
