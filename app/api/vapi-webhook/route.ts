@@ -3,8 +3,10 @@ import {
   upsertCallLog,
   updateCallStatus,
   appendTranscript,
+  storeVapiMetrics,
   CallStatus,
 } from "@/lib/call-handler";
+import { extractVapiMetrics, normalizeMetrics } from "@/lib/vapi-metrics";
 
 /**
  * Retry utility with exponential backoff
@@ -104,8 +106,10 @@ export async function POST(req: Request) {
     }
 
     const eventType = body.type || body.message?.type || "unknown";
-    const callId = body.call?.id || body.callId || body.id;
-    const call = body.call || body;
+    // Extract call ID - handle different event structures
+    const callId = body.call?.id || body.message?.call?.id || body.callId || body.id;
+    // Extract call data - handle different event structures
+    const call = body.call || body.message?.call || body.message || body;
     
     // Store context for error logging
     callContext.callId = callId;
@@ -173,31 +177,55 @@ export async function POST(req: Request) {
         // Handle end of call with error recovery
         try {
           console.log("📋 Call Ended");
-          
+
           if (callId) {
-            const startedAt = call.startedAt || call.startTime;
-            const endedAt = call.endedAt || call.endTime || new Date().toISOString();
+            // For end-of-call-report, timestamps are at message level
+            const startedAt = body.message?.startedAt || call.startedAt || call.startTime;
+            const endedAt = body.message?.endedAt || call.endedAt || call.endTime || new Date().toISOString();
             const duration = startedAt && endedAt
               ? new Date(endedAt).getTime() - new Date(startedAt).getTime()
               : undefined;
 
             console.log("Duration:", duration ? `${duration}ms` : "N/A");
+            console.log("Call ID being saved:", callId);
+
+            // Extract comprehensive Vapi metrics from webhook payload
+            const rawMetrics = extractVapiMetrics(body);
+            const normalizedMetrics = normalizeMetrics(rawMetrics);
+
+            console.log("📊 Extracted Vapi metrics:", {
+              totalCost: normalizedMetrics.totalCostUsd,
+              telephonyCost: normalizedMetrics.telephonyCostUsd,
+              sttCost: normalizedMetrics.sttCostUsd,
+              ttsCost: normalizedMetrics.ttsCostUsd,
+              aiCost: normalizedMetrics.aiCostUsd,
+              tokens: normalizedMetrics.aiTokensInput && normalizedMetrics.aiTokensOutput
+                ? `${normalizedMetrics.aiTokensInput + normalizedMetrics.aiTokensOutput}`
+                : "N/A",
+              model: normalizedMetrics.aiModel || "N/A",
+            });
 
             // Update call log with end information (with retry)
+            // For end-of-call-report, data is at message level
+            const transcript = body.message?.transcript || call.transcript || call.summary?.transcript;
+            const customer = body.message?.customer || call.customer;
+            const summary = body.message?.summary || body.message?.analysis?.summary || call.summary;
+
             await safeDbOperation(
               () => upsertCallLog({
                 call_id: callId,
-                phone_number: call.from || call.phoneNumber || call.customer?.number,
+                phone_number: customer?.number || call.from || call.phoneNumber,
                 status: "completed",
                 language: call.language || call.metadata?.language,
                 started_at: startedAt,
                 ended_at: endedAt,
                 duration_ms: duration,
-                transcript: call.transcript || call.summary?.transcript,
+                transcript: transcript,
                 metadata: {
                   vapi_status: call.status,
-                  summary: call.summary,
-                  cost: call.cost,
+                  summary: summary,
+                  cost: body.message?.cost || call.cost,
+                  endedReason: body.message?.endedReason,
                   ...call.metadata,
                 },
               }),
@@ -205,10 +233,45 @@ export async function POST(req: Request) {
               callId
             );
 
+            // Store comprehensive Vapi metrics (non-blocking)
+            await safeDbOperation(
+              () => storeVapiMetrics(callId, {
+                totalCostUsd: normalizedMetrics.totalCostUsd,
+                telephonyCostUsd: normalizedMetrics.telephonyCostUsd,
+                sttCostUsd: normalizedMetrics.sttCostUsd,
+                sttMinutes: normalizedMetrics.sttMinutes,
+                ttsCostUsd: normalizedMetrics.ttsCostUsd,
+                ttsCharacters: normalizedMetrics.ttsCharacters,
+                aiCostUsd: normalizedMetrics.aiCostUsd,
+                aiTokensInput: normalizedMetrics.aiTokensInput,
+                aiTokensOutput: normalizedMetrics.aiTokensOutput,
+                aiModel: normalizedMetrics.aiModel,
+                averageLatencyMs: normalizedMetrics.averageLatencyMs,
+                jitterMs: normalizedMetrics.jitterMs,
+                packetLossPercent: normalizedMetrics.packetLossPercent,
+                connectionQuality: normalizedMetrics.connectionQuality,
+                recordingUrl: normalizedMetrics.recordingUrl,
+                recordingDurationMs: normalizedMetrics.recordingDurationMs,
+                functionCallsCount: normalizedMetrics.functionCallsCount,
+                functionCallsSuccess: normalizedMetrics.functionCallsSuccess,
+                functionCallsFailed: normalizedMetrics.functionCallsFailed,
+                transfersCount: normalizedMetrics.transfersCount,
+                sentimentScore: normalizedMetrics.sentimentScore,
+                hangupReason: normalizedMetrics.hangupReason,
+                direction: normalizedMetrics.direction,
+                transferred: normalizedMetrics.transferred,
+                assistantId: normalizedMetrics.assistantId,
+                phoneNumberId: normalizedMetrics.phoneNumberId,
+                rawVapiData: body, // Store full webhook payload
+              }),
+              "storeVapiMetrics",
+              callId
+            );
+
             // Append transcript if available (non-blocking)
-            if (call.transcript || call.summary?.transcript) {
+            if (transcript) {
               await safeDbOperation(
-                () => appendTranscript(callId, call.transcript || call.summary.transcript),
+                () => appendTranscript(callId, transcript),
                 "appendTranscript",
                 callId
               );

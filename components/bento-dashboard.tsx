@@ -6,7 +6,7 @@ import { CostDashboard } from "@/components/cost-dashboard";
 import { DocumentList } from "@/components/document-list";
 import { IngestionForm } from "@/components/ingestion-form";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, FileText, TestTube, Upload, Database, DollarSign, Phone } from "lucide-react";
+import { ArrowRight, FileText, TestTube, Upload, Database, DollarSign, Phone, TrendingUp } from "lucide-react";
 import { getLanguageConfig } from "@/lib/language";
 
 interface Document {
@@ -24,10 +24,30 @@ interface BentoDashboardProps {
 export function BentoDashboard({ onNavigate }: BentoDashboardProps) {
   const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
+  const [vapiMetrics, setVapiMetrics] = useState<{
+    totalCost: number;
+    callsWithMetrics: number;
+  } | null>(null);
 
   useEffect(() => {
     fetchRecentDocuments();
+    fetchVapiMetrics();
   }, []);
+
+  const fetchVapiMetrics = async () => {
+    try {
+      const res = await fetch("/api/vapi-metrics?stats=true");
+      const data = await res.json();
+      if (res.ok && data.statistics) {
+        setVapiMetrics({
+          totalCost: data.statistics.cost.totalCost,
+          callsWithMetrics: data.statistics.callsWithMetrics,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Vapi metrics:", error);
+    }
+  };
 
   const fetchRecentDocuments = async () => {
     setIsLoadingDocuments(true);
@@ -161,6 +181,59 @@ export function BentoDashboard({ onNavigate }: BentoDashboardProps) {
                   View Calls
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Vapi Metrics Preview */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Vapi Metrics
+              </CardTitle>
+              <CardDescription>Cost and usage analytics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {vapiMetrics ? (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Total Cost</span>
+                        <span className="text-lg font-bold">
+                          ${vapiMetrics.totalCost.toFixed(4)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Calls Tracked</span>
+                        <span className="text-sm font-medium">{vapiMetrics.callsWithMetrics}</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={() => handleNavigate("vapi-metrics")}
+                    >
+                      View Metrics
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      View comprehensive Vapi metrics including costs, quality, and AI usage
+                    </p>
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={() => handleNavigate("vapi-metrics")}
+                    >
+                      View Metrics
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

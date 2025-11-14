@@ -100,6 +100,106 @@ CREATE TRIGGER update_call_logs_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+-- 13. Add Vapi metrics columns to call_logs table
+-- Vapi cost tracking
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_cost_usd DECIMAL(10, 4);
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_telephony_cost DECIMAL(10, 4);
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_stt_cost DECIMAL(10, 4);
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_tts_cost DECIMAL(10, 4);
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_ai_cost DECIMAL(10, 4);
+
+-- Vapi usage metrics
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_tokens_used INTEGER;
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_model_used VARCHAR(100);
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_recording_url TEXT;
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_function_calls_count INTEGER DEFAULT 0;
+
+-- Vapi call details
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_hangup_reason VARCHAR(100);
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_direction VARCHAR(20); -- 'inbound', 'outbound'
+ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_transferred BOOLEAN DEFAULT false;
+
+-- 14. Create detailed metrics table for granular tracking
+CREATE TABLE IF NOT EXISTS vapi_call_metrics (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  call_id VARCHAR(255) NOT NULL,
+  
+  -- Cost breakdown
+  total_cost_usd DECIMAL(10, 4),
+  telephony_cost_usd DECIMAL(10, 4),
+  stt_cost_usd DECIMAL(10, 4),
+  stt_minutes DECIMAL(10, 2),
+  tts_cost_usd DECIMAL(10, 4),
+  tts_characters INTEGER,
+  ai_cost_usd DECIMAL(10, 4),
+  ai_tokens_input INTEGER,
+  ai_tokens_output INTEGER,
+  ai_model VARCHAR(100),
+  
+  -- Quality metrics
+  average_latency_ms INTEGER,
+  jitter_ms INTEGER,
+  packet_loss_percent DECIMAL(5, 2),
+  connection_quality VARCHAR(50),
+  
+  -- Call metrics
+  recording_url TEXT,
+  recording_duration_ms INTEGER,
+  function_calls_count INTEGER,
+  function_calls_success INTEGER,
+  function_calls_failed INTEGER,
+  transfers_count INTEGER,
+  sentiment_score DECIMAL(3, 2),
+  
+  -- Metadata
+  vapi_assistant_id VARCHAR(255),
+  vapi_phone_number_id VARCHAR(255),
+  raw_vapi_data JSONB, -- Store full webhook payload
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 15. Create indexes for vapi_call_metrics
+CREATE INDEX IF NOT EXISTS idx_vapi_metrics_call ON vapi_call_metrics(call_id);
+CREATE INDEX IF NOT EXISTS idx_vapi_metrics_date ON vapi_call_metrics(created_at);
+
+-- 15a. Add unique constraint on call_id for upsert to work
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'vapi_call_metrics_call_id_key'
+  ) THEN
+    ALTER TABLE vapi_call_metrics ADD CONSTRAINT vapi_call_metrics_call_id_key UNIQUE (call_id);
+  END IF;
+END $$;
+
+-- 15b. Add foreign key constraint with DEFERRABLE for flexible insertion order
+-- Note: DEFERRABLE INITIALLY DEFERRED allows inserting into both tables in the same transaction
+-- The constraint is only checked at transaction commit, not immediately
+DO $$
+BEGIN
+  -- Drop existing constraint if it exists (to recreate with DEFERRABLE)
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'vapi_call_metrics_call_id_fkey'
+  ) THEN
+    ALTER TABLE vapi_call_metrics DROP CONSTRAINT vapi_call_metrics_call_id_fkey;
+  END IF;
+
+  -- Add deferred foreign key constraint
+  ALTER TABLE vapi_call_metrics
+  ADD CONSTRAINT vapi_call_metrics_call_id_fkey
+  FOREIGN KEY (call_id) REFERENCES call_logs(call_id)
+  ON DELETE CASCADE
+  DEFERRABLE INITIALLY DEFERRED;
+END $$;
+
+-- 16. Create trigger to auto-update updated_at for vapi_call_metrics
+CREATE TRIGGER update_vapi_call_metrics_updated_at
+  BEFORE UPDATE ON vapi_call_metrics
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================
 -- Setup Complete!
 -- ============================================
@@ -108,5 +208,13 @@ CREATE TRIGGER update_call_logs_updated_at
 -- 2. Upload documents via the ingestion form
 -- 3. Start using the RAG system
 -- 4. Track phone calls via call_logs table
+-- 5. Track comprehensive Vapi metrics via vapi_call_metrics table
+--
+-- IMPORTANT NOTES (Nov 14, 2025):
+-- - Webhook extracts call ID from body.message.call.id for end-of-call-report events
+-- - Metrics are extracted from body.message.costs array and body.message.costBreakdown
+-- - Foreign key constraint is DEFERRABLE to allow flexible insertion order
+-- - Test with: node scripts/test-webhook.js
+-- - Verify with: node scripts/check-calls.js
 -- ============================================
 

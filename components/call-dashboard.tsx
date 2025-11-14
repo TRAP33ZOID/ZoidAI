@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, Line, LineChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
-import { Phone, PhoneCall, PhoneOff, Clock, TrendingUp, Activity, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Phone, PhoneCall, PhoneOff, Clock, TrendingUp, Activity, CheckCircle2, XCircle, AlertCircle, DollarSign } from "lucide-react";
 import { formatDuration, getHealthScoreColor, getHealthScoreLabel } from "@/lib/call-monitor";
 import { CallLog } from "@/lib/call-handler";
+import { formatCostShort } from "@/lib/vapi-cost-calculator";
 
 interface CallStatistics {
   total: number;
@@ -23,6 +24,17 @@ interface CallDashboardData {
   todayStats: CallStatistics;
   weekStats: CallStatistics;
   monthStats: CallStatistics;
+  vapiCostStats?: {
+    totalCost: number;
+    averageCostPerCall: number;
+    costBreakdown: {
+      total: number;
+      telephony: number;
+      stt: number;
+      tts: number;
+      ai: number;
+    };
+  };
 }
 
 const COLORS = {
@@ -93,12 +105,25 @@ export function CallDashboard() {
       const monthStatsRes = await fetch(`/api/calls?stats=true&startDate=${monthStart.toISOString()}`);
       const monthStats: CallStatistics = await monthStatsRes.json();
       
+      // Fetch Vapi cost statistics
+      let vapiCostStats = undefined;
+      try {
+        const vapiMetricsRes = await fetch("/api/vapi-metrics?stats=true");
+        const vapiMetricsData = await vapiMetricsRes.json();
+        if (vapiMetricsRes.ok && vapiMetricsData.statistics?.cost) {
+          vapiCostStats = vapiMetricsData.statistics.cost;
+        }
+      } catch (error) {
+        console.warn("Failed to fetch Vapi cost stats:", error);
+      }
+      
       setData({
         stats,
         recentCalls,
         todayStats,
         weekStats,
         monthStats,
+        vapiCostStats,
       });
     } catch (error) {
       console.error("Error fetching call data:", error);
@@ -283,6 +308,58 @@ export function CallDashboard() {
         </Card>
       </div>
 
+      {/* Vapi Cost Breakdown */}
+      {data?.vapiCostStats && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Vapi Cost Breakdown
+            </CardTitle>
+            <CardDescription>Cost analysis for phone calls</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <span className="font-medium">Total Cost</span>
+                <span className="text-lg font-bold">
+                  {formatCostShort(data.vapiCostStats.totalCost)}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-3 border rounded-lg">
+                  <div className="text-xs text-muted-foreground mb-1">Telephony</div>
+                  <div className="font-semibold">
+                    {formatCostShort(data.vapiCostStats.costBreakdown.telephony)}
+                  </div>
+                </div>
+                <div className="p-3 border rounded-lg">
+                  <div className="text-xs text-muted-foreground mb-1">STT</div>
+                  <div className="font-semibold">
+                    {formatCostShort(data.vapiCostStats.costBreakdown.stt)}
+                  </div>
+                </div>
+                <div className="p-3 border rounded-lg">
+                  <div className="text-xs text-muted-foreground mb-1">TTS</div>
+                  <div className="font-semibold">
+                    {formatCostShort(data.vapiCostStats.costBreakdown.tts)}
+                  </div>
+                </div>
+                <div className="p-3 border rounded-lg">
+                  <div className="text-xs text-muted-foreground mb-1">AI</div>
+                  <div className="font-semibold">
+                    {formatCostShort(data.vapiCostStats.costBreakdown.ai)}
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground pt-2 border-t">
+                Average cost per call: {formatCostShort(data.vapiCostStats.averageCostPerCall)}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Recent Calls */}
       <Card>
         <CardHeader>
@@ -317,6 +394,11 @@ export function CallDashboard() {
                       )}
                       {call.language && (
                         <span>{call.language}</span>
+                      )}
+                      {call.vapi_cost_usd !== undefined && call.vapi_cost_usd !== null && (
+                        <span className="font-medium text-foreground">
+                          {formatCostShort(call.vapi_cost_usd)}
+                        </span>
                       )}
                     </div>
                   </div>

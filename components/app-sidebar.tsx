@@ -11,11 +11,13 @@ import {
   IconPhone,
   IconSettings,
   IconTestPipe,
+  IconTrendingUp,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
+import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Sidebar,
   SidebarContent,
@@ -44,6 +46,12 @@ const data = {
       url: "#",
       icon: IconPhone,
       section: "calls",
+    },
+    {
+      title: "Vapi Metrics",
+      url: "#",
+      icon: IconTrendingUp,
+      section: "vapi-metrics",
     },
     {
       title: "Documents",
@@ -112,6 +120,14 @@ export function AppSidebar({
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <div className="flex items-center justify-between px-2 py-1.5">
+              <span className="text-sm text-sidebar-foreground/70">Theme</span>
+              <ThemeToggle align="start" />
+            </div>
+          </SidebarMenuItem>
+        </SidebarMenu>
         <NavUser user={data.user} />
       </SidebarFooter>
     </Sidebar>
