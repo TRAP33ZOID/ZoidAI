@@ -353,26 +353,45 @@ CREATE INDEX idx_vapi_metrics_date ON vapi_call_metrics(created_at);
 
 ---
 
-### Phase 8: Deployment & Internet Access (CRITICAL)
+### Phase 8: Deployment & Internet Access (IN PROGRESS)
 **Goal:** Make the app accessible on the internet, not just localhost
 
-**What needs to be built:**
-- Deploy to Vercel/Netlify/AWS (Vercel recommended for Next.js)
-- Configure production environment variables
-- Set up production database connection (connection pooling)
-- Configure production webhook URLs for Vapi (replace ngrok URLs)
-- Set up custom domain (optional but recommended for trust)
-- Environment variable management in deployment platform
-- Staging environment setup (for testing before production)
+**Status:** Phase 8B - Preview Deployment Complete, Testing In Progress
 
-**Files to create:**
-- `vercel.json` or deployment configuration
-- `.env.production.example` template
-- Deployment documentation
+**What's been built:**
+- ✅ Deployed to Vercel (preview environment)
+- ✅ Created `vercel.json` deployment configuration
+- ✅ Created `lib/google-cloud-credentials.ts` for production credentials
+- ✅ Created `scripts/prepare-deployment.ps1` for credential conversion
+- ✅ Updated `lib/voice.ts` to use credentials helper
+- ✅ Updated `lib/supabase.ts` with connection pooling (port 6543)
+- ✅ Updated `lib/gemini.ts` for lazy initialization
+- ✅ Fixed all TypeScript build errors
+- ✅ Configured all 10 environment variables in Vercel Preview
+- ✅ Preview URL: `https://zoiddd-h0vrka7n1-waahmed-4677s-projects.vercel.app`
+
+**What still needs to be done:**
+- ⚠️ Debug chat interface (not working in preview)
+- ⚠️ Test all features in preview environment
+- ⚠️ Update Vapi webhooks to preview URL
+- ⚠️ Upload knowledge base documents
+- ⚠️ Deploy to production (`vercel --prod`)
+- ⚠️ Update Vapi webhooks to production URL
+- ⚠️ Configure Supabase CORS for production domain
+- ⚠️ Set up custom domain (optional)
+
+**Files created:**
+- ✅ `vercel.json` - Deployment configuration
+- ✅ `lib/google-cloud-credentials.ts` - Credentials helper
+- ✅ `scripts/prepare-deployment.ps1` - Deployment script
+- ✅ `ENV_PRODUCTION_TEMPLATE.md` - Environment variables guide
+- ✅ `PHASE_8B_PREVIEW_DEPLOYMENT.md` - Phase 8B documentation
 
 **MVP Criteria:** App accessible at real URL (e.g., `app.zoid.ai`), not `localhost:3000`
 
 **Why this is critical:** Customers can't use a localhost app. This is the foundation.
+
+**See:** `PHASE_8B_PREVIEW_DEPLOYMENT.md` for detailed Phase 8B status and next steps.
 
 ---
 
@@ -918,21 +937,28 @@ If the context does not contain the answer, you MUST politely state that you do 
 
 ---
 
-**Last Updated:** November 14, 2025
-**Version:** 2.5 - Phase 6 Webhook Integration Complete
-**Status:** Phases 1-7 Complete (Feature Development), Infrastructure Phases 8-12 Required for Real MVP
+**Last Updated:** November 17, 2025
+**Version:** 2.6 - Phase 8B Preview Deployment Complete
+**Status:** Phases 1-7 Complete, Phase 8B In Progress (Preview Deployed, Testing Required)
 
-**Recent Updates (Nov 14, 2025):**
+**Recent Updates (Nov 17, 2025):**
+- ✅ Phase 8B Preview Deployment Complete
+- ✅ Deployed to Vercel preview environment
+- ✅ All environment variables configured (10 variables)
+- ✅ Fixed TypeScript build errors (ingest route, sidebar, theme provider)
+- ✅ Updated code for production (credentials helper, connection pooling, lazy initialization)
+- ✅ Created deployment infrastructure files (vercel.json, credentials helper, scripts)
+- ⚠️ Chat interface not working in preview - needs debugging
+- ⚠️ Knowledge base empty - documents need to be uploaded
+- ⚠️ Vapi webhooks not yet updated to preview URL
+
+**Previous Updates (Nov 14, 2025):**
 - ✅ Phase 6 FULLY complete - webhook integration tested and working
 - ✅ Fixed webhook call ID extraction for `end-of-call-report` events (now extracts from `body.message.call.id`)
 - ✅ Fixed metrics extraction to parse Vapi's `costs` array and `costBreakdown` object
 - ✅ Verified all cost data correctly stored: telephony, STT, TTS, AI costs, tokens, quality metrics
 - ✅ Test scripts created: `test-webhook.js`, `check-calls.js`, `verify-database.js`
 - ✅ Webhook simulation test passing with real Vapi payload structure
-- Phase structure completely restructured based on real MVP requirements
-- Clarified that Phases 1-7 are feature-complete but NOT production-ready
-- Added critical infrastructure phases: Deployment, Multi-tenancy, Auth, Payments, Phone Provisioning
-- Real MVP is Phase 14 (requires all infrastructure phases first)
 
 **Critical Realization:**
 The product cannot be used by customers until Phases 8-13 are complete. Current state is a local development demo, not a usable product.

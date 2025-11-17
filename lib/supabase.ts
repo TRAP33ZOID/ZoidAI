@@ -1,8 +1,20 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // Initialize the Supabase client for server-side operations (using the Service Role Key)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+// Use connection pooling in production (recommended for serverless environments)
+// Connection pooling uses port 6543 and provides better performance
+if (process.env.NODE_ENV === "production" && supabaseUrl) {
+  // Replace .supabase.co with .supabase.co:6543 for connection pooling
+  if (supabaseUrl.includes(".supabase.co") && !supabaseUrl.includes(":6543")) {
+    supabaseUrl = supabaseUrl.replace(".supabase.co", ".supabase.co:6543");
+    console.log("✅ [SUPABASE] Using connection pooling (port 6543) for production");
+  }
+} else if (supabaseUrl) {
+  console.log("✅ [SUPABASE] Using direct connection for development");
+}
 
 // Helper to check if Supabase is configured
 export function isSupabaseConfigured(): boolean {

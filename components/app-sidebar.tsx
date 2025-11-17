@@ -124,7 +124,7 @@ export function AppSidebar({
           <SidebarMenuItem>
             <div className="flex items-center justify-between px-2 py-1.5">
               <span className="text-sm text-sidebar-foreground/70">Theme</span>
-              <ThemeToggle align="start" />
+              <ThemeToggle />
             </div>
           </SidebarMenuItem>
         </SidebarMenu>

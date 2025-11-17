@@ -1,12 +1,26 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Ensure the GEMINI_API_KEY environment variable is set
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY environment variable not set.");
+// Lazy initialization - only check API key when actually used (not at build time)
+function getApiKey(): string {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY environment variable not set.");
+  }
+  return apiKey;
 }
 
-// Initialize the GoogleGenAI client
-export const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Initialize the GoogleGenAI client lazily
+let aiInstance: GoogleGenAI | null = null;
+
+export const ai = new Proxy({} as GoogleGenAI, {
+  get(_target, prop) {
+    if (!aiInstance) {
+      aiInstance = new GoogleGenAI({ apiKey: getApiKey() });
+    }
+    const value = (aiInstance as any)[prop];
+    return typeof value === 'function' ? value.bind(aiInstance) : value;
+  }
+});
 
 // Define the models we will use
 export const CHAT_MODEL = "gemini-2.5-flash";

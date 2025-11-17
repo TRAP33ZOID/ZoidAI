@@ -97,8 +97,13 @@ export async function POST(req: Request) {
     console.log(`Split document into ${chunks.length} chunks.`);
 
     // 3. Embed and Store Chunks
-    const documentsToInsert = [];
-    const chunkTexts = [];
+    const documentsToInsert: Array<{
+      content: string;
+      metadata: { filename: string; chunk_index: number };
+      embedding: number[];
+      language: string;
+    }> = [];
+    const chunkTexts: string[] = [];
 
     for (const chunk of chunks) {
       chunkTexts.push(chunk);
@@ -118,15 +123,19 @@ export async function POST(req: Request) {
 
     const embeddings = embedResponse.embeddings;
 
-    if (!embeddings) {
+    if (!embeddings || embeddings.length !== chunks.length) {
       throw new Error("Failed to generate embeddings for document chunks.");
     }
 
     for (let i = 0; i < chunks.length; i++) {
+      const embedding = embeddings[i];
+      if (!embedding || !embedding.values) {
+        throw new Error(`Failed to generate embedding for chunk ${i}.`);
+      }
       documentsToInsert.push({
         content: chunks[i],
         metadata: { filename: filename, chunk_index: i },
-        embedding: embeddings[i].values,
+        embedding: embedding.values,
         language: language, // Store the language for filtering
       });
     }

@@ -1,12 +1,14 @@
 import speech from "@google-cloud/speech";
 import textToSpeech from "@google-cloud/text-to-speech";
-import * as fs from "fs";
-import * as path from "path";
+import { getGoogleCloudCredentialsPath } from "./google-cloud-credentials";
 
-// Get the credentials from the JSON file
-const credentialsPath = path.join(process.cwd(), "lib", "google-cloud-key.json");
-if (!fs.existsSync(credentialsPath)) {
-  throw new Error(`Google Cloud credentials not found at ${credentialsPath}`);
+// Get credentials path (handles both local file and production base64)
+// This will throw an error if credentials are not available
+let credentialsPath: string;
+try {
+  credentialsPath = getGoogleCloudCredentialsPath();
+} catch (error: any) {
+  throw new Error(`Failed to load Google Cloud credentials: ${error.message}`);
 }
 
 // Initialize Google Cloud clients
