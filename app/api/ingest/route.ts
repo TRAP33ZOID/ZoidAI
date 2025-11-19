@@ -3,7 +3,6 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { ai, EMBEDDING_MODEL, withRetry } from "@/lib/gemini";
 import { supabase, DOCUMENTS_TABLE } from "@/lib/supabase";
 import { isValidLanguage, getDefaultLanguage } from "@/lib/language";
-import { PDFParse } from "pdf-parse";
 
 // Define chunking parameters
 const CHUNK_SIZE = 1000;
@@ -25,12 +24,12 @@ async function extractTextFromFile(file: File): Promise<string> {
   // Handle PDF files
   if (fileType === "application/pdf" || fileExtension === ".pdf") {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfParse = require("pdf-parse");
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      const parser = new PDFParse({ data: buffer });
-      const result = await parser.getText();
-      await parser.destroy();
-      return result.text;
+      const data = await pdfParse(buffer);
+      return data.text;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       throw new Error(`Failed to parse PDF: ${errorMessage}`);

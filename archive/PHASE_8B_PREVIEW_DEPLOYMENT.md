@@ -1,8 +1,9 @@
 # Phase 8B: Preview Deployment & Environment Setup
 
-**Status:** ✅ Preview Deployed | ⚠️ Testing In Progress  
-**Date:** November 17, 2025  
-**Preview URL:** `https://zoiddd-h0vrka7n1-waahmed-4677s-projects.vercel.app`
+**Status:** ✅ Preview Deployed | ❌ Chat Interface Failing - "fetch failed" Error  
+**Date:** November 18, 2025  
+**Latest Preview URL:** `https://zoiddd-dec4ym6zr-waahmed-4677s-projects.vercel.app`  
+**Previous URLs:** `https://zoiddd-zsq2j561z-waahmed-4677s-projects.vercel.app`, `https://zoiddd-h0vrka7n1-waahmed-4677s-projects.vercel.app`
 
 ---
 
@@ -22,11 +23,20 @@ Phase 8B focuses on deploying a preview environment to Vercel and configuring al
 
 ### 2. Code Updates for Production
 - ✅ Updated `lib/voice.ts` - Now uses credentials helper (supports both local file and base64 env var)
-- ✅ Updated `lib/supabase.ts` - Added connection pooling for production (port 6543)
+- ✅ Updated `lib/supabase.ts` - Fixed connection pooling logic (preview uses direct, production uses pooling)
 - ✅ Updated `lib/gemini.ts` - Changed to lazy initialization to avoid build-time errors
 - ✅ Fixed TypeScript errors in `app/api/ingest/route.ts` - Added proper type annotations
 - ✅ Fixed TypeScript errors in `components/app-sidebar.tsx` - Removed invalid `align` prop
 - ✅ Fixed TypeScript errors in `components/theme-provider.tsx` - Fixed import path
+
+### 2b. Debugging & Logging Enhancements (November 18, 2025)
+- ✅ Enhanced `app/api/chat/route.ts` - Comprehensive logging at each step, environment checks, detailed errors
+- ✅ Enhanced `lib/rag.ts` - Logging for embedding generation and Supabase RPC calls with timing
+- ✅ Enhanced `lib/gemini.ts` - Initialization logging to track API key access
+- ✅ Enhanced `lib/supabase.ts` - Connection status logging, environment detection, connection type logging
+- ✅ Enhanced `components/chat-interface.tsx` - Better error messages, detailed error logging, toast notifications
+- ✅ Created `app/api/health/route.ts` - Health check endpoint for diagnostics
+- ✅ Enhanced `scripts/check-database.js` - Tests documents table and match_documents RPC function
 
 ### 3. Preview Deployment
 - ✅ Successfully deployed preview to Vercel
@@ -59,30 +69,47 @@ All 10 environment variables added to Vercel Preview environment:
 - Build completes successfully
 - All TypeScript errors resolved
 
-### ⚠️ Testing Required
-- **Chat Interface**: Needs testing - user reported it's not working
-- **Knowledge Base**: Empty (documents need to be uploaded)
+### ❌ Known Issues
+- **Chat Interface**: FAILING - "fetch failed" error when calling Supabase RPC
+- **Error Message**: "❌ Error: Could not access knowledge base. Please check if documents are uploaded."
+- **Root Cause**: `TypeError: fetch failed` in Supabase connection from Vercel preview
+- **Knowledge Base**: NOT empty - 8 document chunks exist (verified locally)
 - **Vapi Webhooks**: Not yet updated to point to preview URL
-- **Supabase Connection**: Needs verification in production environment
+- **Supabase Connection**: Works locally, fails in Vercel preview (network issue suspected)
 
 ---
 
 ## Known Issues
 
 ### 1. Chat Interface Not Working
-**Status:** Under investigation  
-**Next Steps:**
-- Check Vercel logs for errors
-- Verify Supabase connection in preview environment
-- Test API endpoints directly
-- Check browser console for client-side errors
+**Status:** ❌ STILL FAILING - "fetch failed" error persists  
+**Error Details:**
+- Error: `TypeError: fetch failed` when calling `supabase.rpc("match_documents")`
+- User sees: "❌ Error: Could not access knowledge base. Please check if documents are uploaded."
+- Local test results:
+  - ✅ Documents table exists (8 chunks)
+  - ✅ `match_documents` RPC function works locally
+  - ⚠️ First connection test shows "fetch failed" but subsequent tests work
+- Vercel preview: Still failing with same error
 
-### 2. Empty Knowledge Base
-**Status:** Expected - documents need to be uploaded  
-**Solution:**
-- Upload sample documents via preview deployment UI
-- Or upload via localhost (same database)
-- Documents in `knowledge-bases/` directory are ready to upload
+**Investigation Steps:**
+1. Check Vercel logs: `vercel logs https://zoiddd-dec4ym6zr-waahmed-4677s-projects.vercel.app`
+2. Test health endpoint: `GET /api/health` - will show which component is failing
+3. Verify Supabase network access from Vercel functions
+4. Check if Supabase allows connections from Vercel IP ranges
+5. Test direct Supabase connection from Vercel function (not via RPC)
+6. Check if connection pooling fix is working (should use direct connection in preview)
+
+**Possible Causes:**
+- Network firewall blocking Vercel → Supabase connection
+- Supabase connection pooling URL format issue (though we fixed this)
+- Timeout issues with Supabase RPC calls from Vercel
+- DNS resolution issues from Vercel functions
+- Supabase project settings blocking external connections
+
+### 2. Knowledge Base Status
+**Status:** ✅ NOT EMPTY - 8 document chunks exist  
+**Note:** Error message is misleading - the issue is NOT missing documents, it's a connection/network error preventing access to the existing documents.
 
 ### 3. Vapi Webhooks Not Updated
 **Status:** Pending  
@@ -192,8 +219,10 @@ All 10 environment variables added to Vercel Preview environment:
 
 ### View Logs
 ```bash
-vercel logs --follow
-vercel logs [deployment-url]
+# View logs for specific deployment (use latest URL)
+vercel logs https://zoiddd-dec4ym6zr-waahmed-4677s-projects.vercel.app
+
+# Note: --follow flag is deprecated, logs show for 5 minutes
 ```
 
 ### Redeploy Preview
@@ -235,6 +264,6 @@ vercel --prod
 
 ---
 
-**Last Updated:** November 17, 2025  
-**Next Agent:** Please update this document as you test and fix issues.
+**Last Updated:** November 18, 2025  
+**Next Agent:** Chat interface still failing with "fetch failed" error. Check Vercel logs and health endpoint to diagnose network connectivity issue between Vercel and Supabase.
 

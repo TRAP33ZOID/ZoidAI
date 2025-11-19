@@ -249,10 +249,39 @@ export function ChatInterface() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to fetch response from AI agent.");
+        // Try to get error details from response
+        let errorMessage = "Failed to fetch response from AI agent.";
+        let errorDetails: any = null;
+        
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorMessage;
+          errorDetails = errorData.details || null;
+          console.error("API Error Response:", {
+            status: res.status,
+            statusText: res.statusText,
+            error: errorMessage,
+            details: errorDetails
+          });
+        } catch (parseError) {
+          console.error("API Error (could not parse response):", {
+            status: res.status,
+            statusText: res.statusText,
+            parseError
+          });
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await res.json();
+      
+      // Check if response contains an error
+      if (data.error) {
+        console.error("API returned error:", data);
+        throw new Error(data.error);
+      }
+      
       const responseText = data.response || "Sorry, I couldn't find an answer.";
 
       // Track costs from chat response
@@ -268,13 +297,39 @@ export function ChatInterface() {
         newMessages[newMessages.length - 1].text = responseText;
         return newMessages;
       });
-    } catch (error) {
-      console.error("API Error:", error);
+    } catch (error: any) {
+      console.error("API Error:", {
+        message: error?.message || error,
+        stack: error?.stack,
+        name: error?.name
+      });
+      
+      // Create a more detailed error message
+      let errorMessage = "❌ Error: Could not connect to the support agent.";
+      
+      if (error?.message) {
+        // Show specific error if available
+        if (error.message.includes("Failed to retrieve context")) {
+          errorMessage = "❌ Error: Could not access knowledge base. Please check if documents are uploaded.";
+        } else if (error.message.includes("GEMINI_API_KEY")) {
+          errorMessage = "❌ Error: AI service configuration issue. Please contact support.";
+        } else if (error.message.includes("Supabase")) {
+          errorMessage = "❌ Error: Database connection issue. Please try again later.";
+        } else {
+          // Show the actual error message (sanitized for user display)
+          errorMessage = `❌ Error: ${error.message}`;
+        }
+      }
+      
       setMessages((prev) => {
         const newMessages = [...prev];
-        newMessages[newMessages.length - 1].text =
-          "❌ Error: Could not connect to the support agent.";
+        newMessages[newMessages.length - 1].text = errorMessage;
         return newMessages;
+      });
+      
+      // Show toast notification for better visibility
+      toast.error("Failed to get response from AI agent", {
+        description: error?.message || "Please try again or check your connection.",
       });
     } finally {
       setIsLoading(false);

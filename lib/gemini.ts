@@ -4,18 +4,32 @@ import { GoogleGenAI } from "@google/genai";
 function getApiKey(): string {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
+    console.error("❌ [GEMINI] GEMINI_API_KEY environment variable not set");
     throw new Error("GEMINI_API_KEY environment variable not set.");
   }
+  console.log("✅ [GEMINI] API key found (length:", apiKey.length, ")");
   return apiKey;
 }
 
 // Initialize the GoogleGenAI client lazily
 let aiInstance: GoogleGenAI | null = null;
+let initializationLogged = false;
 
 export const ai = new Proxy({} as GoogleGenAI, {
   get(_target, prop) {
     if (!aiInstance) {
-      aiInstance = new GoogleGenAI({ apiKey: getApiKey() });
+      console.log("🔵 [GEMINI] Initializing GoogleGenAI client...");
+      try {
+        const apiKey = getApiKey();
+        aiInstance = new GoogleGenAI({ apiKey });
+        if (!initializationLogged) {
+          console.log("✅ [GEMINI] GoogleGenAI client initialized successfully");
+          initializationLogged = true;
+        }
+      } catch (error: any) {
+        console.error("❌ [GEMINI] Failed to initialize client:", error?.message || error);
+        throw error;
+      }
     }
     const value = (aiInstance as any)[prop];
     return typeof value === 'function' ? value.bind(aiInstance) : value;
