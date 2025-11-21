@@ -1,8 +1,9 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // Initialize the Supabase client for server-side operations (using the Service Role Key)
-let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+// Trim whitespace and newlines from environment variables (fixes Vercel env var issues)
+let supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 
 // Use direct connection instead of connection pooling
 // Connection pooling (port 6543) may not be available on all Supabase instances
