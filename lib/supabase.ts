@@ -4,20 +4,13 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-// Use connection pooling in production (recommended for serverless environments)
-// Connection pooling uses port 6543 and provides better performance
-// Note: Vercel preview deployments have NODE_ENV=production but VERCEL_ENV=preview
-// Only use pooling for actual production, not preview
-const isProduction = process.env.VERCEL_ENV === "production" || 
+// Use direct connection instead of connection pooling
+// Connection pooling (port 6543) may not be available on all Supabase instances
+// Once verified in Supabase dashboard, can be re-enabled
+const isProduction = process.env.VERCEL_ENV === "production" ||
   (process.env.NODE_ENV === "production" && !process.env.VERCEL_ENV);
 
-if (isProduction && supabaseUrl) {
-  // Replace .supabase.co with .supabase.co:6543 for connection pooling
-  if (supabaseUrl.includes(".supabase.co") && !supabaseUrl.includes(":6543")) {
-    supabaseUrl = supabaseUrl.replace(".supabase.co", ".supabase.co:6543");
-    console.log("✅ [SUPABASE] Using connection pooling (port 6543) for production");
-  }
-} else if (supabaseUrl) {
+if (supabaseUrl) {
   const envType = process.env.VERCEL_ENV || "local";
   console.log(`✅ [SUPABASE] Using direct connection for ${envType}`);
 }
