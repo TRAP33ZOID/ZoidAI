@@ -88,7 +88,8 @@ export async function speechToText(
 
     if (!transcription) {
       console.error("  ❌ ERROR: Empty transcription result");
-      throw new Error("No transcription result from Google Cloud Speech");
+      // This usually means no speech was detected (mic muted, silence, etc.)
+      throw new Error("NO_SPEECH_DETECTED");
     }
 
     console.log(`  ✅ Final transcription: "${transcription}"`);

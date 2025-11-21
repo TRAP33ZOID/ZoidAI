@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Volume2, Globe, Copy, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { getLanguageOptions, getDefaultLanguage } from "@/lib/language";
+import { getLanguageOptions, getDefaultLanguage, isValidLanguage } from "@/lib/language";
 import { costMonitor } from "@/lib/cost-monitor";
 
 // Storage keys for persistence
@@ -20,14 +20,43 @@ interface Message {
   audioBase64?: string;
 }
 
+// Helper function to load messages from localStorage (runs synchronously)
+function loadMessagesFromStorage(): Message[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const savedMessages = localStorage.getItem(STORAGE_KEY);
+    if (savedMessages) {
+      return JSON.parse(savedMessages);
+    }
+  } catch (e) {
+    console.error('Failed to parse saved messages:', e);
+  }
+  return [];
+}
+
+// Helper function to load language from localStorage (runs synchronously)
+function loadLanguageFromStorage(): string {
+  if (typeof window === 'undefined') return getDefaultLanguage();
+  try {
+    const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (savedLanguage && isValidLanguage(savedLanguage)) {
+      return savedLanguage;
+    }
+  } catch (e) {
+    console.error('Failed to load saved language:', e);
+  }
+  return getDefaultLanguage();
+}
+
 export function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  // Use lazy initializer to load from localStorage synchronously before first render
+  const [messages, setMessages] = useState<Message[]>(loadMessagesFromStorage);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null);
-  const [currentLanguage, setCurrentLanguage] = useState<string>(getDefaultLanguage());
+  const [currentLanguage, setCurrentLanguage] = useState<string>(loadLanguageFromStorage);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -53,31 +82,48 @@ export function ChatInterface() {
     };
   }, []);
 
-  // Load messages and language preference from localStorage on mount
+  // Save messages to localStorage whenever they change AND on unmount
   useEffect(() => {
-    const savedMessages = localStorage.getItem(STORAGE_KEY);
-    if (savedMessages) {
+    if (typeof window !== 'undefined') {
       try {
-        setMessages(JSON.parse(savedMessages));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
       } catch (e) {
-        console.error('Failed to parse saved messages:', e);
+        console.error('Failed to save messages to localStorage:', e);
       }
     }
-
-    const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    if (savedLanguage) {
-      setCurrentLanguage(savedLanguage);
-    }
-  }, []);
-
-  // Save messages to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    
+    // Cleanup: save on unmount as well
+    return () => {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+        } catch (e) {
+          console.error('Failed to save messages on unmount:', e);
+        }
+      }
+    };
   }, [messages]);
 
-  // Save language preference to localStorage whenever it changes
+  // Save language preference to localStorage whenever it changes AND on unmount
   useEffect(() => {
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage);
+      } catch (e) {
+        console.error('Failed to save language to localStorage:', e);
+      }
+    }
+    
+    // Cleanup: save on unmount as well
+    return () => {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage);
+        } catch (e) {
+          console.error('Failed to save language on unmount:', e);
+        }
+      }
+    };
   }, [currentLanguage]);
 
   // Start recording audio
@@ -148,7 +194,23 @@ export function ChatInterface() {
       if (!res.ok) {
         const errorData = await res.json();
         console.error("Voice API Error:", errorData);
-        throw new Error(errorData.hint || errorData.error || "Failed to process voice input");
+        
+        // Handle no speech detected error with user-friendly message
+        if (errorData.errorType === "NO_SPEECH_DETECTED" || errorData.message?.includes("No speech detected")) {
+          setMessages((prev) => {
+            const newMessages = [...prev];
+            newMessages[newMessages.length - 1].text = 
+              "🎤 No speech detected. Please check that your microphone is not muted and try again.";
+            return newMessages;
+          });
+          toast.error("No speech detected", {
+            description: "Your microphone may be muted or no audio was recorded.",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        throw new Error(errorData.message || errorData.error || "Failed to process voice input");
       }
 
       const data = await res.json();

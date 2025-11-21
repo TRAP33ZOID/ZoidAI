@@ -42,10 +42,34 @@ export async function POST(req: Request) {
     // 2. Convert speech to text (STT)
     console.log("\n🎤 [VOICE API] Step 2: Starting STT...");
     const sttStartTime = Date.now();
-    const userQuery = await speechToText(audioBuffer, "WEBM_OPUS", language);
-    const sttDuration = Date.now() - sttStartTime;
-    console.log(`  ✅ STT completed in ${sttDuration}ms`);
-    console.log(`  Transcribed query: "${userQuery}"`);
+    let userQuery: string;
+    let sttDuration: number;
+    try {
+      userQuery = await speechToText(audioBuffer, "WEBM_OPUS", language);
+      sttDuration = Date.now() - sttStartTime;
+      console.log(`  ✅ STT completed in ${sttDuration}ms`);
+      console.log(`  Transcribed query: "${userQuery}"`);
+    } catch (sttError: any) {
+      // Handle case where no speech was detected (mic muted, silence, etc.)
+      const errorMessage = sttError.message || "";
+      if (
+        errorMessage === "NO_SPEECH_DETECTED" || 
+        errorMessage.includes("NO_SPEECH_DETECTED") ||
+        errorMessage.includes("No transcription result")
+      ) {
+        console.log("  ⚠️ No speech detected in audio");
+        return NextResponse.json(
+          {
+            error: "No speech detected",
+            message: "No speech was detected in your recording. Please check that your microphone is not muted and try again.",
+            errorType: "NO_SPEECH_DETECTED"
+          },
+          { status: 400 }
+        );
+      }
+      // Re-throw other STT errors
+      throw sttError;
+    }
 
     // 3. Retrieve context using RAG
     console.log("\n📚 [VOICE API] Step 3: Retrieving context...");
