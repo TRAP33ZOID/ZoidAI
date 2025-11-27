@@ -1,6 +1,9 @@
 # 🎙️ Zoid AI Support Agent
 
-A bilingual (English/Arabic) voice-enabled AI customer support agent built with Next.js, featuring real-time speech interaction and RAG-powered knowledge retrieval. **Note:** Currently in development - feature phases complete, infrastructure phases required for production MVP.
+A bilingual (English/Arabic) voice-enabled AI customer support agent built with Next.js, featuring real-time speech interaction and RAG-powered knowledge retrieval.
+
+**🚀 Live Demo:** https://zoiddd.vercel.app  
+**📞 Phone:** +1 (510) 370-5981
 
 ## ✨ Features
 
@@ -208,13 +211,15 @@ zoiddd/
 ## 📚 Documentation
 
 **Current Documentation:**
-- **[PROJECT_STATE.md](PROJECT_STATE.md)** - AI Agent Handover - Current implementation status, technical details, and next steps (UPDATED)
+- **[PROJECT_STATE.md](PROJECT_STATE.md)** - Comprehensive project history and technical details (for AI agents)
+- **[CURRENT_PHASE.md](CURRENT_PHASE.md)** - Current phase focus and instructions (for next agent)
 - **[BUSINESS_STRATEGY.md](BUSINESS_STRATEGY.md)** - Business strategy, go-to-market plan, pricing, and customer discovery
-- **[TESTING.md](TESTING.md)** - Testing documentation and verification procedures
+- **[README.md](README.md)** - Setup instructions for humans (this file)
 
 **Archived Documentation:**
 - `archive/ROADMAP.md` - Original technical roadmap (archived)
 - `archive/PROJECT_HANDOVER.md` - Original technical handover document (archived)
+- `archive/PHASE_8_*.md` - Phase 8 deployment documentation (archived)
 - `archive/z-composer/` - Previous strategic planning documents
 - `archive/z-sonnet/` - Previous project handover documents
 
@@ -257,62 +262,48 @@ These are already in `.gitignore`, but always double-check before committing.
 
 ## 📊 Current Status
 
-### ✅ Completed Feature Phases
+### ✅ Completed Phases
 
-- ✅ **Phase 1:** Core RAG Chat Implementation
-- ✅ **Phase 2:** Persistent Knowledge Base & Ingestion
-- ✅ **Phase 3:** Voice Integration
-- ✅ **Phase 4:** Arabic Language Support (Bilingual UI, RTL, language-aware RAG)
-- ✅ **Phase 5:** Telephony Integration
-  - Phone number provisioned: +1 (510) 370 5981
-  - Vapi webhook and server function endpoints created
-  - ⚠️ **Note:** Vapi tool creation blocker (using built-in RAG temporarily)
-- 🚧 **Phase 6:** Basic Call Handling & Vapi Metrics Tracking (IN PROGRESS)
-  - ✅ Call logging and state management complete
-  - ✅ Call statistics API and dashboard
-  - ✅ Error recovery and monitoring
-  - ⏳ Vapi metrics extraction pending
-- ✅ **Phase 7:** Error Recovery & Monitoring
-  - ✅ Retry logic and circuit breaker pattern
-  - ✅ Call quality monitoring and health scoring
-  - ✅ Comprehensive call statistics dashboard
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | Core RAG Chat Implementation | ✅ Complete |
+| 2 | Persistent Knowledge Base & Ingestion | ✅ Complete |
+| 3 | Voice Integration (STT/TTS) | ✅ Complete |
+| 4 | Arabic Language Support (Bilingual, RTL) | ✅ Complete |
+| 5 | Telephony Integration (VAPI) | ✅ Complete |
+| 6 | Call Handling & Metrics | ✅ Complete |
+| 7 | Error Recovery & Monitoring | ✅ Complete |
+| 8 | Production Deployment (Vercel) | ✅ Complete |
 
-### 🚧 Infrastructure Phases Required for Real MVP
+### 🚧 Remaining Phases for Full MVP
 
-**CRITICAL:** Phases 1-7 are feature-complete but the product is NOT production-ready yet. The app:
-- ❌ Only runs locally (`npm run dev`)
-- ❌ Uses a single shared database (no multi-tenancy)
-- ❌ Has no user authentication
-- ❌ Has no payment system
-- ❌ Cannot be accessed from the internet
-- ❌ Cannot provision phone numbers per customer
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 9 | Multi-Tenancy & Data Isolation | 🚧 Next |
+| 10 | User Authentication & Sign-Up | ⏳ Pending |
+| 11 | Payment Integration (Stripe) | ⏳ Pending |
+| 12 | Per-Tenant Phone Provisioning | ⏳ Pending |
+| 13 | Admin Panel & Notifications | ⏳ Pending |
 
-**Real MVP requires:**
-- 🚧 Phase 8: Deployment & Internet Access
-- 🚧 Phase 9: Multi-Tenancy & Data Isolation
-- 🚧 Phase 10: User Authentication & Sign-Up
-- 🚧 Phase 11: Payment Integration & Usage Tracking
-- 🚧 Phase 12: Per-Tenant Phone Number Provisioning
-- 🚧 Phase 13: Basic Admin Panel & Email Notifications
-
-See **[PROJECT_STATE.md](PROJECT_STATE.md)** for detailed phase descriptions and requirements.
+See **[PROJECT_STATE.md](PROJECT_STATE.md)** for detailed phase descriptions.
 
 ## ⚠️ Known Issues & Limitations
 
-**Vapi Integration:**
-- Server function tool creation fails with "An error occurred while updating the tool" - This is a Vapi platform issue, not our code
-- Currently using Vapi's built-in knowledge base as temporary workaround
-- Supabase RAG endpoint (`/api/vapi-function`) is ready but not connected due to tool creation blocker
-- Once Vapi resolves the issue, we can switch to Supabase RAG for full control
+**Current Limitations:**
+- Single-tenant (shared database for all users)
+- No user authentication yet
+- No payment system yet
+- Single phone number for all calls
 
-**Production Readiness:**
-- ⚠️ **Not Production-Ready:** This is a development demo. See "Infrastructure Phases Required for Real MVP" above.
-- The app requires deployment, multi-tenancy, authentication, payments, and per-tenant phone provisioning before customers can use it independently.
+**Vapi Integration:**
+- Server function tool creation has known issues with Vapi platform
+- Currently using Vapi's built-in knowledge base as workaround
+- Supabase RAG endpoint (`/api/vapi-function`) is ready when Vapi fixes their tool API
 
 **Next Steps:**
-1. Complete Phase 6: Vapi metrics extraction
-2. Monitor Vapi for tool creation fix
-3. Begin infrastructure phases (8-13) for real MVP
+1. Configure VAPI webhook URLs to production
+2. Begin Phase 9: Multi-Tenancy
+3. Add user authentication (Phase 10)
 
 ## 📝 License
 

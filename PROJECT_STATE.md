@@ -1,7 +1,15 @@
 # Zoid AI Voice Agent - Project State
 
 **Last Updated:** November 27, 2025  
-**Status:** Phases 1-8C Complete, Local Dev Working
+**Status:** ✅ Production Deployed & Healthy
+
+---
+
+## Quick Links
+
+- **Production URL:** https://zoiddd.vercel.app
+- **Health Check:** https://zoiddd.vercel.app/api/health
+- **Phone Number:** +1 (510) 370-5981 (via VAPI)
 
 ---
 
@@ -12,6 +20,19 @@ AI voice agent for customer calls with bilingual (English/Arabic) support, answe
 ```
 Phone Call → Telephony → STT ⇄ RAG ⇄ AI ⇄ TTS → Caller
 ```
+
+---
+
+## Current Deployment Status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| ✅ Vercel | Deployed | https://zoiddd.vercel.app |
+| ✅ Gemini API | Working | Key length: 40 |
+| ✅ Supabase | Connected | Direct connection, pgvector enabled |
+| ✅ RAG/Chat | Working | Vector search operational |
+| ✅ Google Cloud | Configured | STT/TTS via base64 credentials |
+| ⏳ VAPI Webhooks | Needs Config | Update webhook URLs in VAPI dashboard |
 
 ---
 
@@ -39,14 +60,11 @@ Phone Call → Telephony → STT ⇄ RAG ⇄ AI ⇄ TTS → Caller
 - Circuit breaker pattern
 - Call quality monitoring
 
-### Phase 8A-C: Deployment ✅
+### Phase 8A-D: Deployment ✅
 - Vercel deployment configured
-- Production URL: https://zoiddd.vercel.app
+- All environment variables updated (Nov 27, 2025)
 - All 14 API routes deployed
-
-### Phase 8D: Testing ⏳
-- Comprehensive production testing pending
-- See testing checklist in archive
+- Health check passing
 
 ---
 
@@ -60,6 +78,26 @@ Phone Call → Telephony → STT ⇄ RAG ⇄ AI ⇄ TTS → Caller
 | Database | Supabase + pgvector |
 | Voice | Google Cloud STT/TTS |
 | Telephony | VAPI.ai |
+| Hosting | Vercel |
+
+---
+
+## API Routes
+
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/health` | GET | Health check |
+| `/api/chat` | POST | Text chat with RAG |
+| `/api/voice` | POST | Voice (STT → RAG → TTS) |
+| `/api/ingest` | POST | Document upload |
+| `/api/documents` | GET | List documents |
+| `/api/calls` | GET | Call logs |
+| `/api/calls/simple` | GET | Simple call stats |
+| `/api/calls/test` | POST | Test call logging |
+| `/api/vapi-webhook` | POST | VAPI call events |
+| `/api/vapi-function` | POST | VAPI server function |
+| `/api/vapi-metrics` | GET | VAPI metrics |
+| `/api/debug` | GET | Debug info |
 
 ---
 
@@ -77,6 +115,7 @@ Phone Call → Telephony → STT ⇄ RAG ⇄ AI ⇄ TTS → Caller
 - `lib/rag.ts` - Vector search
 - `lib/supabase.ts` - Database client
 - `lib/voice.ts` - STT/TTS
+- `lib/google-cloud-credentials.ts` - Handles base64 credentials for Vercel
 
 ---
 
@@ -108,6 +147,37 @@ CREATE TABLE call_logs (
 
 ---
 
+## Environment Variables
+
+### Local Development (`.env.local`)
+```bash
+GEMINI_API_KEY=your_key
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+GOOGLE_CLOUD_PROJECT_ID=your_project_id
+GOOGLE_APPLICATION_CREDENTIALS=lib/google-cloud-key.json
+VAPI_API_KEY=uuid
+VAPI_PUBLIC_KEY=uuid
+VAPI_WEBHOOK_TOKEN=your_token
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### Vercel Production
+All variables set via Vercel CLI (updated Nov 27, 2025):
+- `GEMINI_API_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_CLOUD_PROJECT_ID`
+- `GOOGLE_APPLICATION_CREDENTIALS_BASE64` (base64-encoded JSON)
+- `VAPI_API_KEY`
+- `VAPI_PUBLIC_KEY`
+- `VAPI_WEBHOOK_TOKEN`
+- `NEXT_PUBLIC_APP_URL`
+
+---
+
 ## Remaining Phases for Real MVP
 
 ### Phase 9: Multi-Tenancy (Critical)
@@ -135,19 +205,39 @@ CREATE TABLE call_logs (
 
 ---
 
-## Quick Test
+## Quick Commands
 
 ```bash
-# Start dev server
+# Local development
 npm run dev
 
-# Test chat API
+# Check local health
+curl http://localhost:3000/api/health
+
+# Check production health
+curl https://zoiddd.vercel.app/api/health
+
+# Test chat API (local)
 curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"query": "Hello", "language": "en-US"}'
 
-# Check health
-curl http://localhost:3000/api/health
+# Test chat API (production)
+curl -X POST https://zoiddd.vercel.app/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Hello", "language": "en-US"}'
+
+# Deploy to Vercel
+vercel --prod
+
+# View Vercel logs
+vercel logs --prod
+
+# Update environment variable
+echo "value" | vercel env add VAR_NAME production
+
+# List environment variables
+vercel env ls
 ```
 
 ---
