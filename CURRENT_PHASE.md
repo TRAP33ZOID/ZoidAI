@@ -1,7 +1,15 @@
-# Current Phase: Production Deployed - Ready for Phase 9
+# Current Phase: Production Testing & Phase 9 Prep
 
 **Date:** November 27, 2025  
-**Status:** ✅ Production deployed and healthy
+**Status:** ✅ Production deployed - Ready for testing & Phase 9
+
+---
+
+## Quick Links
+
+- **Production URL:** https://zoiddd.vercel.app
+- **Health Check:** https://zoiddd.vercel.app/api/health
+- **Phone Number:** +1 (510) 370-5981
 
 ---
 
@@ -17,45 +25,74 @@
 7. ✅ Verified chat API working with RAG
 
 ### Production Status
-- **URL:** https://zoiddd.vercel.app
-- **Health:** ✅ Healthy
-- **Gemini:** ✅ Working
-- **Supabase:** ✅ Connected
-- **RAG:** ✅ Working
-
----
-
-## Environment Variables (All Updated)
-
-The following were updated in Vercel on Nov 27, 2025:
-
-| Variable | Status |
-|----------|--------|
-| `GEMINI_API_KEY` | ✅ New key |
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ Updated |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ New JWT |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ New JWT |
-| `GOOGLE_CLOUD_PROJECT_ID` | ✅ Set |
-| `GOOGLE_APPLICATION_CREDENTIALS_BASE64` | ✅ New service account |
-| `VAPI_API_KEY` | ✅ New key |
-| `VAPI_PUBLIC_KEY` | ✅ New key |
-| `VAPI_WEBHOOK_TOKEN` | ✅ Set |
-| `NEXT_PUBLIC_APP_URL` | ✅ https://zoiddd.vercel.app |
+| Component | Status |
+|-----------|--------|
+| URL | https://zoiddd.vercel.app |
+| Health | ✅ Healthy |
+| Gemini | ✅ Working |
+| Supabase | ✅ Connected |
+| RAG | ✅ Working |
 
 ---
 
 ## Immediate Next Steps
 
 ### 1. Configure VAPI Webhooks (Required for Phone Calls)
-Update webhook URLs in VAPI dashboard to point to production:
+Go to https://dashboard.vapi.ai and update:
 - **Webhook URL:** `https://zoiddd.vercel.app/api/vapi-webhook`
 - **Server Function URL:** `https://zoiddd.vercel.app/api/vapi-function`
 
-### 2. Test Phone Call
-Call +1 (510) 370-5981 to verify end-to-end phone integration.
+### 2. Production Testing (See Checklist Below)
 
 ### 3. Begin Phase 9: Multi-Tenancy
-See roadmap below.
+
+---
+
+## 🔍 Production Testing Checklist
+
+### 1. Application Load & UI
+- [ ] Visit https://zoiddd.vercel.app - page loads without errors
+- [ ] All sidebar menu items work
+- [ ] Theme toggle (light/dark) works and persists
+- [ ] Responsive design works (mobile/tablet/desktop)
+
+### 2. Chat Interface
+- [ ] **English:** Type "Hello, what is this system?" - response appears <3s
+- [ ] **Arabic:** Type "مرحبا، ما هذا النظام؟" - RTL displays correctly
+- [ ] Chat history scrolls properly
+- [ ] Empty/long messages handled gracefully
+
+### 3. Document Upload
+- [ ] Upload `.txt` file - appears in Documents list
+- [ ] Upload PDF file - processes correctly
+- [ ] Chat can reference uploaded documents
+- [ ] Multiple documents work
+
+### 4. Voice/Audio
+- [ ] Microphone permission prompt works
+- [ ] English voice recording transcribes correctly
+- [ ] Arabic voice recording transcribes correctly
+- [ ] Audio playback works (if enabled)
+
+### 5. Analytics & Costs
+- [ ] Analytics section loads
+- [ ] API costs display correctly
+- [ ] Metrics update after interactions
+
+### 6. API Health
+- [ ] `/api/health` returns healthy status
+- [ ] Database shows "connected"
+- [ ] Gemini shows "ok"
+
+### 7. Phone Call (After VAPI Config)
+- [ ] Call +1 (510) 370-5981
+- [ ] Voice agent responds
+- [ ] Call logged in database
+
+### 8. Performance
+- [ ] Page load <3 seconds
+- [ ] API responses <2 seconds
+- [ ] No console errors
 
 ---
 
@@ -78,7 +115,50 @@ vercel --prod
 
 # View logs
 vercel logs --prod
+
+# View logs (last hour)
+vercel logs --prod --since 1h
 ```
+
+---
+
+## Debugging
+
+### Common Issues
+
+**Chat not responding:**
+```bash
+vercel logs --prod
+curl https://zoiddd.vercel.app/api/health
+vercel env ls
+```
+
+**Documents not uploading:**
+- Check file size (max 10MB)
+- Check browser console for errors
+- Check `vercel logs --prod`
+
+**Audio not working:**
+- Verify microphone permissions in browser
+- Test on Chrome (best support)
+- Check console for Web Audio API errors
+
+---
+
+## Environment Variables (All Updated Nov 27, 2025)
+
+| Variable | Status |
+|----------|--------|
+| `GEMINI_API_KEY` | ✅ New key |
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ Updated |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ New JWT |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ New JWT |
+| `GOOGLE_CLOUD_PROJECT_ID` | ✅ Set |
+| `GOOGLE_APPLICATION_CREDENTIALS_BASE64` | ✅ New service account |
+| `VAPI_API_KEY` | ✅ New key |
+| `VAPI_PUBLIC_KEY` | ✅ New key |
+| `VAPI_WEBHOOK_TOKEN` | ✅ Set |
+| `NEXT_PUBLIC_APP_URL` | ✅ https://zoiddd.vercel.app |
 
 ---
 
@@ -115,16 +195,7 @@ Enable multiple customers to use Zoid with isolated data.
 
 ---
 
-## Development Rules
-
-1. **Never commit secrets** - Use `.env.local` locally, Vercel dashboard for deployments
-2. **Test locally first** - Verify features work before deploying
-3. **Incremental changes** - Small commits, test each step
-4. **Keep docs updated** - Update PROJECT_STATE.md with progress
-
----
-
-## Files to Know
+## Key Files
 
 | File | Purpose |
 |------|---------|
@@ -136,3 +207,12 @@ Enable multiple customers to use Zoid with isolated data.
 | `lib/gemini.ts` | AI client |
 | `app/api/health/route.ts` | Health check endpoint |
 | `app/api/chat/route.ts` | Main chat API |
+
+---
+
+## Development Rules
+
+1. **Never commit secrets** - Use `.env.local` locally, Vercel dashboard for deployments
+2. **Test locally first** - Verify features work before deploying
+3. **Incremental changes** - Small commits, test each step
+4. **Keep docs updated** - Update PROJECT_STATE.md with progress

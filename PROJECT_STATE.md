@@ -17,9 +17,45 @@
 
 AI voice agent for customer calls with bilingual (English/Arabic) support, answering from a knowledge base.
 
+## Architecture
+
 ```
-Phone Call → Telephony → STT ⇄ RAG ⇄ AI ⇄ TTS → Caller
+┌─────────────────────────────────────────────────────────┐
+│                    ZOID AI ARCHITECTURE                  │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  Phone Call                                              │
+│      │                                                   │
+│      ▼                                                   │
+│  ┌─────────┐     ┌──────────────┐     ┌─────────────┐   │
+│  │  VAPI   │────▶│ /api/vapi-*  │────▶│  Supabase   │   │
+│  │ (Phone) │     │  (webhooks)  │     │  (pgvector) │   │
+│  └─────────┘     └──────────────┘     └─────────────┘   │
+│                         │                    │          │
+│                         ▼                    │          │
+│                  ┌─────────────┐             │          │
+│                  │   Gemini    │◀────────────┘          │
+│                  │  2.5 Flash  │   (RAG context)        │
+│                  └─────────────┘                        │
+│                         │                               │
+│                         ▼                               │
+│                  ┌─────────────┐                        │
+│                  │ Google TTS  │                        │
+│                  │   (voice)   │                        │
+│                  └─────────────┘                        │
+│                                                          │
+│  Web Chat                                                │
+│      │                                                   │
+│      ▼                                                   │
+│  ┌─────────┐     ┌──────────────┐                       │
+│  │ Browser │────▶│  /api/chat   │  (same RAG flow)      │
+│  │   UI    │     │  /api/voice  │                       │
+│  └─────────┘     └──────────────┘                        │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
 ```
+
+**Simple flow:** `Phone Call → VAPI → STT → RAG → Gemini → TTS → Caller`
 
 ---
 
@@ -101,21 +137,46 @@ Phone Call → Telephony → STT ⇄ RAG ⇄ AI ⇄ TTS → Caller
 
 ---
 
-## Key Files
+## Project Structure
 
-### API Routes
-- `app/api/chat/route.ts` - Text chat with RAG
-- `app/api/voice/route.ts` - Voice (STT → RAG → TTS)
-- `app/api/ingest/route.ts` - Document upload
-- `app/api/vapi-webhook/route.ts` - Call events
-- `app/api/health/route.ts` - Health check
+```
+ZoidAI/
+├── app/
+│   ├── api/
+│   │   ├── chat/route.ts        # Main chat API with RAG
+│   │   ├── voice/route.ts       # Voice STT→RAG→TTS
+│   │   ├── health/route.ts      # Health check
+│   │   ├── ingest/route.ts      # Document upload
+│   │   ├── documents/route.ts   # List documents
+│   │   ├── calls/route.ts       # Call logs
+│   │   ├── vapi-webhook/route.ts # VAPI call events
+│   │   └── vapi-function/route.ts # VAPI server function
+│   └── page.tsx                 # Main UI
+├── lib/
+│   ├── gemini.ts                # Gemini AI client
+│   ├── rag.ts                   # Vector search (RAG)
+│   ├── supabase.ts              # Database client
+│   ├── voice.ts                 # Google STT/TTS
+│   ├── google-cloud-credentials.ts # Base64 creds for Vercel
+│   ├── vapi.ts                  # VAPI helpers
+│   └── google-cloud-key.json    # Service account (NEVER COMMIT)
+├── components/                  # React components
+├── knowledge-bases/             # Sample knowledge base files
+├── .env.local                   # Local secrets (NEVER COMMIT)
+├── PROJECT_STATE.md             # This file
+└── CURRENT_PHASE.md             # Current focus & testing checklist
+```
 
-### Libraries
-- `lib/gemini.ts` - AI client
-- `lib/rag.ts` - Vector search
-- `lib/supabase.ts` - Database client
-- `lib/voice.ts` - STT/TTS
-- `lib/google-cloud-credentials.ts` - Handles base64 credentials for Vercel
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `lib/gemini.ts` | Gemini AI client initialization |
+| `lib/rag.ts` | Vector search with Supabase pgvector |
+| `lib/supabase.ts` | Database client with logging |
+| `lib/voice.ts` | Google Cloud STT/TTS |
+| `app/api/chat/route.ts` | Main chat endpoint |
+| `app/api/health/route.ts` | Health check endpoint |
 
 ---
 
