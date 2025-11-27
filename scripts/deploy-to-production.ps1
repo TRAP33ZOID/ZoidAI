@@ -11,7 +11,7 @@ Write-Host "Reading environment variables..." -ForegroundColor Yellow
 $envContent = Get-Content ".env.local" -Raw
 
 # Extract values
-$GEMINI_API_KEY = "AIzaSyBZlJtnEJuEkUQKZ5paEv2rAUBUCt1yoJM"
+$GEMINI_API_KEY = "AIzaSyAM8d5AEDVAl2m53h2xe105TiWbBxQYVd8"
 $NEXT_PUBLIC_SUPABASE_URL = "https://gwpfcgibcotpymwboaei.supabase.co"
 $NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3cGZjZ2liY290cHltd2JvYWVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NzQ5NjgsImV4cCI6MjA3ODA1MDk2OH0.-oAQRc9mQrAefNxzEtzAqegjMcExAenrdtm8d5VYPiQ"
 $SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3cGZjZ2liY290cHltd2JvYWVpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjQ3NDk2OCwiZXhwIjoyMDc4MDUwOTY4fQ.oxm42SSlxUJmn0WWQRE432zdHjD3qhlck9afoLnOMiY"
