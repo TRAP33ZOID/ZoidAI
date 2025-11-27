@@ -1,1148 +1,162 @@
-# 📊 Zoid AI Voice Agent - Project State & Context
+# Zoid AI Voice Agent - Project State
 
-**Last Updated:** November 19, 2025  
-**Purpose:** AI Agent Handover - Technical implementation status and next steps  
-**Status:** Phases 1-7 Complete, Phase 8B Complete - Ready for Phase 8C (Production Deployment)
+**Last Updated:** November 27, 2025  
+**Status:** Phases 1-8C Complete, Local Dev Working
 
 ---
 
-## 🎯 Project Goal
+## Project Goal
 
-Build an AI voice agent that receives customer calls and answers from a knowledge base, with bilingual (English/Arabic) support.
+AI voice agent for customer calls with bilingual (English/Arabic) support, answering from a knowledge base.
 
-### Target Architecture
 ```
-Phone Call → Telephony → Streaming STT ⇄ RAG ⇄ AI ⇄ Streaming TTS → Caller
-Latency: <500ms | Type: CONTINUOUS STREAMING
+Phone Call → Telephony → STT ⇄ RAG ⇄ AI ⇄ TTS → Caller
 ```
 
 ---
 
-## ✅ Completed Phases
+## Completed Phases
 
-### Phase 1: Core RAG Chat ✅
-**What was built:**
-- Gemini 2.5 Flash integration (`lib/gemini.ts`)
-- RAG with vector search using Supabase pgvector (`lib/rag.ts`)
-- Text-based chat interface (`components/chat-interface.tsx`)
-- Backend API route (`app/api/chat/route.ts`)
+### Phase 1-4: Core Features ✅
+- Gemini 2.5 Flash AI integration
+- RAG with Supabase pgvector (768-dim embeddings)
+- Voice: Google Cloud STT/TTS
+- Bilingual: English + Arabic (RTL support)
+- Cost monitoring dashboard
 
-**Key Implementation:**
-- Vector embeddings using `text-embedding-004` (768 dimensions)
-- Custom `match_documents()` RPC function in Supabase
-- Language-aware retrieval (filters by language)
+### Phase 5: Telephony ✅
+- VAPI integration
+- Phone number: +1 (510) 370-5981
+- Webhook endpoints configured
+
+### Phase 6: Call Handling ✅
+- Call logging to database
+- Vapi metrics extraction (costs, quality, tokens)
+- Call statistics API
+
+### Phase 7: Error Recovery ✅
+- Retry logic with exponential backoff
+- Circuit breaker pattern
+- Call quality monitoring
+
+### Phase 8A-C: Deployment ✅
+- Vercel deployment configured
+- Production URL: https://zoiddd.vercel.app
+- All 14 API routes deployed
+
+### Phase 8D: Testing ⏳
+- Comprehensive production testing pending
+- See testing checklist in archive
 
 ---
 
-### Phase 2: Persistent Knowledge Base ✅
-**What was built:**
-- Supabase/pgvector integration (`lib/supabase.ts`)
-- Document ingestion API (`app/api/ingest/route.ts`)
-- Text chunking and embedding generation
-- Vector storage and retrieval
-- Document management UI (`components/document-list.tsx`)
-- Document upload form (`components/ingestion-form.tsx`)
+## Technology Stack
 
-**Key Implementation:**
-- Documents table with `vector(768)` column
-- Chunking strategy: ~500 tokens per chunk
-- Metadata stored as JSONB
-- Language tagging per document
+| Component | Technology |
+|-----------|------------|
+| Frontend | Next.js 16, React, TypeScript, Tailwind |
+| AI | Gemini 2.5 Flash |
+| Embeddings | text-embedding-004 (768 dim) |
+| Database | Supabase + pgvector |
+| Voice | Google Cloud STT/TTS |
+| Telephony | VAPI.ai |
 
-**Database Schema:**
+---
+
+## Key Files
+
+### API Routes
+- `app/api/chat/route.ts` - Text chat with RAG
+- `app/api/voice/route.ts` - Voice (STT → RAG → TTS)
+- `app/api/ingest/route.ts` - Document upload
+- `app/api/vapi-webhook/route.ts` - Call events
+- `app/api/health/route.ts` - Health check
+
+### Libraries
+- `lib/gemini.ts` - AI client
+- `lib/rag.ts` - Vector search
+- `lib/supabase.ts` - Database client
+- `lib/voice.ts` - STT/TTS
+
+---
+
+## Database Schema
+
 ```sql
+-- Documents with embeddings
 CREATE TABLE documents (
   id BIGSERIAL PRIMARY KEY,
   content TEXT NOT NULL,
   embedding vector(768),
-  metadata JSONB DEFAULT '{}',
-  language VARCHAR(10) DEFAULT 'en-US',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  metadata JSONB,
+  language VARCHAR(10),
+  created_at TIMESTAMPTZ
 );
-```
 
----
-
-### Phase 3: Voice Integration ✅
-**What was built:**
-- Google Cloud Speech-to-Text integration (`lib/voice.ts`)
-- Google Cloud Text-to-Speech integration (`lib/voice.ts`)
-- Real-time audio recording (Web Audio API)
-- Audio playback with UI controls
-- Voice API route (`app/api/voice/route.ts`)
-- Full RAG integration with voice
-
-**Key Implementation:**
-- STT: WebM/Opus input (48kHz) → Google Cloud STT
-- TTS: Text → Google Cloud TTS → MP3 output
-- Service account JSON at `lib/google-cloud-key.json`
-- Language support: en-US, ar-SA
-
----
-
-### Phase 4: Arabic Language Support ✅
-**What was built:**
-- Bilingual UI with language selector (`components/chat-interface.tsx`)
-- Language-aware RAG retrieval (`lib/rag.ts`)
-- RTL text rendering for Arabic
-- Arabic STT/TTS via Google Cloud (ar-SA)
-- Language configuration (`lib/language.ts`)
-- Dynamic system instructions per language
-- Cost monitoring dashboard (`components/cost-dashboard.tsx`)
-- Session persistence (localStorage)
-
-**Key Implementation:**
-- Language detection and filtering in RAG queries
-- RTL support via `dir="rtl"` attribute
-- System prompts customized per language
-- Cost tracking per API call (`lib/cost-monitor.ts`)
-
-**Bugs Fixed:**
-- ✅ Voice STT empty transcription (buffer encoding issue)
-- ✅ Cost dashboard showing $0.0000 (localStorage on server)
-- ✅ Document auto-refresh (event system)
-- ✅ Session persistence (localStorage implementation)
-
----
-
-## ✅ Completed Phases (Continued)
-
-### Phase 5: Telephony Integration ✅
-**Goal:** Enable real phone calls with streaming audio
-
-**Status:** ✅ COMPLETE
-- ✅ Phone number provisioned: **+1 (510) 370 5981**
-- ✅ Vapi account configured
-- ✅ Webhook endpoint: `app/api/vapi-webhook/route.ts` (receives call events)
-- ✅ Server function endpoint: `app/api/vapi-function/route.ts` (Supabase RAG integration)
-- ✅ Knowledge base files uploaded to Vapi: `sample-en.txt`, `sample-ar.txt`
-- ✅ Vapi tool creation working
-- ✅ Connected Supabase RAG via API Request tool
-- ✅ Real phone call testing completed
-
-**Configuration:**
-- Webhook URL: `https://eliana-hyperdulical-wamblingly.ngrok-free.dev/api/vapi-webhook`
-- Server Function URL: `https://eliana-hyperdulical-wamblingly.ngrok-free.dev/api/vapi-function`
-- System Prompt: "Hello! Welcome to Zoid AI Support. How can I assist you today?"
-
-**Next Steps:**
-1. ✅ Monitor Vapi for tool creation fix
-2. ✅ Connect Supabase RAG via API Request tool
-3. ✅ Test with real calls
-
----
-
-### Phase 6: Basic Call Handling & Vapi Metrics Tracking ✅ COMPLETE
-**Goal:** Handle phone calls end-to-end with comprehensive Vapi metrics extraction
-
-**Status:** ✅ FULLY COMPLETE - Webhook integration tested and working with real Vapi payloads
-
-**What was built:**
-- ✅ Call state management (`lib/call-handler.ts`)
-- ✅ Basic call logging (store call transcripts in database)
-- ✅ Call logging API (`app/api/calls/route.ts`)
-- ✅ Database table for call logs (`call_logs` table)
-- ✅ Webhook integration for automatic call logging
-- ✅ Call statistics and analytics functions
-- ✅ Test scripts for local testing (`scripts/test-call-logging.js`, `scripts/test-webhook.js`, `scripts/check-calls.js`)
-- ✅ Database diagnostic script (`scripts/verify-database.js`)
-- ✅ Comprehensive Vapi metrics extraction (costs, quality, AI usage)
-- ✅ Vapi metrics storage functions (`lib/call-handler.ts`)
-- ✅ Vapi metrics extraction library (`lib/vapi-metrics.ts`)
-- ✅ Cost calculator library (`lib/vapi-cost-calculator.ts`)
-- ✅ Vapi metrics API endpoint (`app/api/vapi-metrics/route.ts`)
-- ✅ Vapi metrics dashboard component (`components/vapi-metrics-dashboard.tsx`)
-- ✅ Integration into call dashboard and admin UI
-- ✅ **FIXED:** Webhook properly extracts call ID from `end-of-call-report` events
-- ✅ **FIXED:** Metrics extraction from Vapi's nested payload structure
-
-**Key Implementation:**
-- `call_logs` table with indexes for efficient queries
-- `vapi_call_metrics` table for detailed metrics with foreign key to call_logs
-- Automatic call log creation/updates via webhook events
-- Support for status updates, transcripts, and call completion
-- Statistics API for call analytics (total, completed, failed, duration)
-- Pagination support for call log retrieval
-- Webhook token validation (enforced in production, skipped in development for testing)
-- Error handling with detailed logging and retry logic
-- ✅ **COMPLETE:** Full Vapi metrics extraction from `end-of-call-report` events
-- Extracts costs breakdown (telephony, STT, TTS, AI), tokens, quality metrics, recording URLs
-- Handles Vapi's nested payload structure (`body.message.call.id`, `body.message.costs` array)
-- Stores comprehensive metrics in both `call_logs` (summary) and `vapi_call_metrics` (detailed)
-
-**Database Schema:**
-```sql
+-- Call logs
 CREATE TABLE call_logs (
   id UUID PRIMARY KEY,
-  call_id VARCHAR(255) UNIQUE NOT NULL,
+  call_id VARCHAR(255) UNIQUE,
   phone_number VARCHAR(20),
   status VARCHAR(50),
-  language VARCHAR(10),
-  started_at TIMESTAMPTZ,
-  ended_at TIMESTAMPTZ,
   duration_ms INTEGER,
   transcript TEXT,
-  metadata JSONB,
-  created_at TIMESTAMPTZ,
-  updated_at TIMESTAMPTZ
+  vapi_cost_usd DECIMAL(10,4),
+  created_at TIMESTAMPTZ
 );
-
--- Comprehensive Vapi metrics columns
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_cost_usd DECIMAL(10, 4);
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_telephony_cost DECIMAL(10, 4);
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_stt_cost DECIMAL(10, 4);
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_tts_cost DECIMAL(10, 4);
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_ai_cost DECIMAL(10, 4);
-
--- Vapi usage metrics
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_tokens_used INTEGER;
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_model_used VARCHAR(100);
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_recording_url TEXT;
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_function_calls_count INTEGER DEFAULT 0;
-
--- Vapi call details
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_hangup_reason VARCHAR(100);
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_direction VARCHAR(20);
-ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS vapi_transferred BOOLEAN DEFAULT false;
-
--- Detailed metrics table for granular tracking
-CREATE TABLE IF NOT EXISTS vapi_call_metrics (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  call_id VARCHAR(255) REFERENCES call_logs(call_id),
-  
-  -- Cost breakdown
-  total_cost_usd DECIMAL(10, 4),
-  telephony_cost_usd DECIMAL(10, 4),
-  stt_cost_usd DECIMAL(10, 4),
-  stt_minutes DECIMAL(10, 2),
-  tts_cost_usd DECIMAL(10, 4),
-  tts_characters INTEGER,
-  ai_cost_usd DECIMAL(10, 4),
-  ai_tokens_input INTEGER,
-  ai_tokens_output INTEGER,
-  ai_model VARCHAR(100),
-  
-  -- Quality metrics
-  average_latency_ms INTEGER,
-  jitter_ms INTEGER,
-  packet_loss_percent DECIMAL(5, 2),
-  connection_quality VARCHAR(50),
-  
-  -- Call metrics
-  recording_url TEXT,
-  recording_duration_ms INTEGER,
-  function_calls_count INTEGER,
-  function_calls_success INTEGER,
-  function_calls_failed INTEGER,
-  transfers_count INTEGER,
-  sentiment_score DECIMAL(3, 2),
-  
-  -- Metadata
-  vapi_assistant_id VARCHAR(255),
-  vapi_phone_number_id VARCHAR(255),
-  raw_vapi_data JSONB,
-  
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX idx_vapi_metrics_call ON vapi_call_metrics(call_id);
-CREATE INDEX idx_vapi_metrics_date ON vapi_call_metrics(created_at);
 ```
 
-**Testing & Verification:**
-- ✅ Database setup verified (`node scripts/verify-database.js`)
-- ✅ Test calls successfully logged via webhook simulation
-- ✅ API endpoints tested and working (`/api/calls`, `/api/calls?stats=true`)
-- ✅ Webhook endpoint tested with simulated Vapi events (`node scripts/test-webhook.js`)
-- ✅ Metrics extraction verified with real Vapi payload structure
-- ✅ All cost breakdowns correctly stored (telephony: $0.0472, STT: $0.0099, TTS: $0.019, AI: $0.004)
-- ✅ Real phone call test verified end-to-end flow with actual Vapi call
+---
 
-**Production Readiness:**
-- ✅ Webhook token validation: Enforced in production (`NODE_ENV !== "development"`)
-- ✅ Development mode: Token validation skipped for local testing
-- ✅ Real Vapi calls: Will include correct token header automatically, will work correctly
-- ✅ Error handling: Graceful failures with detailed logging
+## Remaining Phases for Real MVP
 
-**Files Created:**
-- ✅ `lib/vapi-metrics.ts` - Extract and parse Vapi metrics from webhooks
-- ✅ `lib/vapi-cost-calculator.ts` - Calculate cost breakdown from Vapi data
-- ✅ `app/api/vapi-metrics/route.ts` - Metrics API endpoint (GET Vapi metrics, statistics)
-- ✅ `components/vapi-metrics-dashboard.tsx` - Comprehensive Vapi metrics UI
+### Phase 9: Multi-Tenancy (Critical)
+- Organization/tenant model
+- Row-level security
+- Isolated data per customer
 
-**Files Enhanced:**
-- ✅ `supabase-setup.sql` - Added Vapi metrics columns and `vapi_call_metrics` table
-- ✅ `app/api/vapi-webhook/route.ts` - Extracts comprehensive metrics from webhooks
-- ✅ `lib/call-handler.ts` - Added `storeVapiMetrics()` and `getVapiMetrics()` functions
-- ✅ `components/call-dashboard.tsx` - Added Vapi cost breakdown display
-- ✅ `components/admin-dashboard.tsx` - Added Vapi Metrics section
-- ✅ `components/bento-dashboard.tsx` - Added Vapi metrics preview card
-- ✅ `components/app-sidebar.tsx` - Added Vapi Metrics navigation item
+### Phase 10: Authentication (Critical)
+- User sign-up/login
+- Session management
+- Protected routes
 
-**Dashboard Features:**
-- ✅ Display Vapi cost breakdown (telephony, STT, TTS, AI costs) with pie and bar charts
-- ✅ Show quality metrics (latency, jitter, packet loss) statistics
-- ✅ Display AI usage (tokens, model distribution) statistics
-- ✅ Show function call metrics (count, success rate) with visualizations
-- ✅ Real-time updates (auto-refresh every 30 seconds)
-- ✅ Integrated into admin UI with dedicated sidebar navigation
+### Phase 11: Payments (Critical)
+- Stripe integration
+- Free tier ($1 limit)
+- Per-tenant usage tracking
 
-**Next Agent Notes:**
-- Phase 6 is FULLY complete - all features tested and working ✅
-- All API endpoints working: `GET /api/calls`, `GET /api/calls?stats=true`, `GET /api/calls?callId=<id>`, `GET /api/vapi-metrics`, `GET /api/vapi-metrics?stats=true`
-- Webhook endpoint: `/api/vapi-webhook` - extracts and stores comprehensive metrics from `end-of-call-report` events
-- **IMPORTANT FIX (Nov 14, 2025):** Webhook now correctly extracts call ID from `body.message.call.id` (not `body.call.id`)
-- **IMPORTANT FIX (Nov 14, 2025):** Metrics extraction updated to parse `body.message.costs` array and `body.message.costBreakdown`
-- Database schema includes `call_logs` table (summary) and `vapi_call_metrics` table (detailed metrics)
-- Test scripts available: `node scripts/test-webhook.js`, `node scripts/check-calls.js`, `node scripts/verify-database.js`
-- Webhook simulation test passes with all metrics correctly extracted
-- Ready for production use - real phone call testing completed
+### Phase 12: Phone Provisioning (Critical)
+- Per-tenant phone numbers
+- Vapi configuration per org
+
+### Phase 13: Admin & Notifications
+- Admin panel
+- Email notifications
 
 ---
 
-### Phase 7: Error Recovery & Monitoring ✅
-**Goal:** Stable call handling with error recovery and monitoring
+## Quick Test
 
-**What was built:**
-- ✅ Stable call handling with error recovery (retry logic, graceful degradation)
-- ✅ Enhanced error handling in call handler (circuit breaker pattern, connection health checks)
-- ✅ Call quality monitoring library (`lib/call-monitor.ts`)
-- ✅ Call statistics dashboard (`components/call-dashboard.tsx`)
-- ✅ Integrated dashboard into admin UI (sidebar navigation, dedicated calls section)
-
-**Key Implementation:**
-- Retry logic with exponential backoff (3 attempts: 100ms, 200ms, 400ms)
-- Circuit breaker pattern to prevent cascading failures
-- Graceful degradation: webhook always returns 200 even if logging fails
-- Structured error logging with call context
-- Health score calculation based on success rate and duration
-- Real-time dashboard with auto-refresh (30s interval)
-- Status breakdown charts and call volume trends
-
-**Files Created:**
-- `lib/call-monitor.ts` - Call quality tracking and health score calculation
-- `components/call-dashboard.tsx` - Comprehensive call statistics dashboard
-
-**Files Enhanced:**
-- `app/api/vapi-webhook/route.ts` - Added error recovery and retry logic
-- `lib/call-handler.ts` - Added retry wrapper, circuit breaker, connection health checks
-- `components/admin-dashboard.tsx` - Added calls section
-- `components/app-sidebar.tsx` - Added Calls navigation item
-- `components/bento-dashboard.tsx` - Added call stats preview card
-
-**Note:** This is feature-complete but NOT production-ready. App still requires infrastructure phases (8-12) before real MVP.
-
----
-
-## ✅ Phase 8: Deployment & Internet Access - COMPLETE
-
-**Status:** ✅ PHASE 8C COMPLETE - Production Live, Phase 8D Pending
-
-**Phase 8 Breakdown:**
-- **8A:** Initial Setup ✅ COMPLETE
-- **8B:** Preview Deployment & Testing ✅ COMPLETE
-- **8C:** Production Deployment ✅ COMPLETE
-- **8D:** Production Testing & Verification ⏳ PENDING
-
-### 8A - Initial Setup: ✅ COMPLETE
-- ✅ Created `vercel.json` deployment configuration
-- ✅ Created `lib/google-cloud-credentials.ts` for production credentials
-- ✅ Created `scripts/prepare-deployment.ps1` for credential conversion
-- ✅ Updated `lib/voice.ts` to use credentials helper
-- ✅ Updated `lib/supabase.ts` with connection pooling (port 6543)
-- ✅ Updated `lib/gemini.ts` for lazy initialization
-- ✅ Fixed all TypeScript build errors
-- ✅ Configured all 10 environment variables in Vercel Preview
-
-### 8B - Preview Deployment & Testing: ✅ COMPLETE - ALL ISSUES FIXED
-
-**Issues Fixed:**
-
-1. **Chat Interface "fetch failed" Error** ✅ FIXED
-   - **Root Cause:** `NODE_ENV` set to `"producti"` (truncated) causing wrong connection pooling
-   - **Fix:** Removed `NODE_ENV` from Vercel Preview, system now auto-detects via `VERCEL_ENV`
-   - **Result:** Chat works perfectly with sub-second responses
-
-2. **Document Upload DOMMatrix Error** ✅ FIXED
-   - **Root Cause:** Incorrect `pdf-parse` import using browser APIs
-   - **Fix:** Changed to `require("pdf-parse")` in `app/api/ingest/route.ts`
-   - **Result:** Document upload (text and PDF) works flawlessly
-
-**Testing Results:**
-- ✅ Chat Interface (English/Arabic) - Working
-- ✅ Document Upload (text/PDF) - Working  
-- ✅ Audio Input - Working
-- ✅ Analytics Tracking - Working
-
-**Latest Working Preview:** `https://zoiddd-49pdd760w-waahmed-4677s-projects.vercel.app`
-
-**Files Created/Modified:**
-- ✅ `app/api/health/route.ts` - Health check endpoint for diagnostics
-- ✅ Enhanced logging in all critical paths with emoji prefixes
-- ✅ Fixed connection pooling logic in `lib/supabase.ts`
-- ✅ Fixed PDF parsing in `app/api/ingest/route.ts`
-
-### 8C - Production Deployment: ✅ COMPLETE
-
-**Date:** November 21, 2025  
-**Production URL:** https://zoiddd.vercel.app  
-**Status:** Successfully deployed to production
-
-**Accomplishments:**
-1. ✅ Installed Vercel CLI and authenticated
-2. ✅ Added all 9 environment variables to Vercel production
-3. ✅ Deployed to production with `vercel --prod`
-4. ✅ Fixed connection pooling issue (switched to direct connection)
-5. ✅ Fixed credentials BOM encoding issue
-6. ✅ Verified dashboard loads and renders correctly
-7. ✅ All 14 API routes deployed successfully
-
-**Issues Found & Resolved:**
-
-1. **Connection Pooling Failure** ✅ FIXED
-   - **Symptom:** `TypeError: fetch failed` when connecting to Supabase
-   - **Root Cause:** Connection pooling on port 6543 was unavailable
-   - **Resolution:** Modified `lib/supabase.ts` to use direct connection instead of pooling
-   - **Result:** Database connectivity restored
-
-2. **Google Cloud Credentials BOM Encoding** ✅ FIXED
-   - **Symptom:** Supabase showing "Invalid API key" error
-   - **Root Cause:** `google-cloud-credentials-base64.txt` had UTF-8 BOM character corrupting base64 string
-   - **Resolution:** Regenerated file without BOM
-   - **Result:** Credentials now properly formatted
-
-**Production Configuration:**
-- **Framework:** Next.js 16.0.1 (Turbopack)
-- **Build Duration:** 40 seconds
-- **Deployment Time:** 54 seconds
-- **API Routes:** 14/14 endpoints deployed
-- **Static Pages:** 16/16 pages generated
-- **Environment Variables:** 9/9 configured
-- **Database:** Supabase (direct connection)
-- **Region:** Washington, D.C., USA (iad1)
-
-**Environment Variables Configured:**
-1. `GEMINI_API_KEY` ✅
-2. `NEXT_PUBLIC_SUPABASE_URL` ✅
-3. `NEXT_PUBLIC_SUPABASE_ANON_KEY` ✅
-4. `SUPABASE_SERVICE_ROLE_KEY` ✅
-5. `VAPI_API_KEY` ✅
-6. `VAPI_PHONE_NUMBER_ID` ✅
-7. `VAPI_WEBHOOK_TOKEN` ✅
-8. `GOOGLE_APPLICATION_CREDENTIALS_BASE64` ✅
-9. `NEXT_PUBLIC_APP_URL` ✅
-
-**Production Verification:**
-- ✅ Application loads at https://zoiddd.vercel.app
-- ✅ Dashboard renders correctly
-- ✅ Navigation functional
-- ✅ API endpoints responding
-- ✅ Database connected
-- ✅ Health check endpoint working: https://zoiddd.vercel.app/api/health
-
-**Files Modified:**
-- `lib/supabase.ts` - Switched to direct connection (removed pooling logic)
-- `google-cloud-credentials-base64.txt` - Regenerated without BOM
-- `scripts/deploy-to-production.ps1` - Created deployment script
-
-**Debugging Commands:**
 ```bash
-# View production logs
-vercel logs --prod
-
-# List all deployments
-vercel ls
-
-# Check environment variables
-vercel env ls
-
-# Test health endpoint
-curl https://zoiddd.vercel.app/api/health
-
-# Rollback to previous deployment
-vercel promote [deployment-url]
-```
-
-**Manual Tasks for Phase 8D:**
-- ⏳ Update Vapi webhook URLs to production URL (https://zoiddd.vercel.app/api/vapi-webhook)
-- ⏳ Update Vapi server function URL (https://zoiddd.vercel.app/api/vapi-function)
-
-### 8D - Production Testing & Verification: 🔧 IN PROGRESS
-
-**Status:** Troubleshooting production issues  
-**Focus:** Fixing Supabase connection issue before comprehensive testing
-
-**Recent Troubleshooting (Nov 22, 2025):**
-
-**Issue Identified: Supabase "Invalid API key" Error** 🔍
-- **Symptom:** Health endpoint shows degraded status with Supabase connection error
-- **Error:** `"supabase": {"status": "error", "message": "Invalid API key"}`
-- **Investigation:** 
-  - Verified all 9 environment variables are set in Vercel production
-  - Health check shows environment variables present but Supabase key invalid
-  - Suspected encoding/formatting issues from deployment script
-
-**Fixes Applied:** ✅
-1. **Enhanced `lib/supabase.ts` (lines 1-102):**
-   - Added JWT key format validation (must start with "eyJ")
-   - Improved whitespace/newline trimming (removes `\r\n`, `\n`, `\r`, and all spaces)
-   - Enhanced error logging with key diagnostics
-   - Better validation before client creation
-
-2. **Created Fix Script:**
-   - `scripts/fix-supabase-key.ps1` - Properly re-adds Supabase key to Vercel
-   - Uses correct PowerShell piping (not Write-Host)
-   - Includes verification steps
-
-**Next Steps:**
-- Run `.\scripts\fix-supabase-key.ps1` to fix Vercel environment variable
-- Redeploy: `vercel --prod`
-- Verify health endpoint returns `"supabase": {"status": "ok"}`
-- Continue with comprehensive testing
-
-**Files Modified:**
-- `lib/supabase.ts` - Enhanced key validation and error handling
-- `scripts/fix-supabase-key.ps1` - Created fix script
-
----
-
-**Testing Scope (10 Categories):**
-1. Application Load & UI (30 min)
-2. Chat Interface (45 min)
-3. Document Upload (30 min)
-4. Audio/Voice Input (30 min)
-5. Analytics & Costs (20 min)
-6. Database Connectivity (15 min)
-7. Performance Testing (30 min)
-8. Browser Compatibility (15 min)
-9. Error Handling & Resilience (30 min)
-10. Mobile/Accessibility (20 min)
-
-**Total Estimated Time:** 5-6 hours
-
-**Success Criteria:**
-- ✅ All tests passing
-- ✅ No critical errors
-- ✅ Performance acceptable (<3s load)
-- ✅ All features functional
-- ✅ Mobile responsive
-- ✅ Cross-browser compatible
-
----
-
-## 📋 Infrastructure Phases Required for Real MVP
-
-**CRITICAL NOTE:** Phases 1-8 are now complete. The app is:
-- ✅ Deployed and accessible on the internet
-- ✅ All features working in preview environment
-- ❌ Still uses a single shared database (no multi-tenancy)
-- ❌ Has no user authentication
-- ❌ Has no payment system
-- ❌ Cannot provision phone numbers per customer
-
-**Real MVP requires Phases 9-13 below.**
-
----
-
-### Phase 9: Multi-Tenancy & Data Isolation (CRITICAL)
-**Goal:** Each customer gets their own isolated workspace and data
-
-**What needs to be built:**
-- Organization/tenant model in database
-- Row-level security (RLS) in Supabase for tenant isolation
-- Tenant context middleware for all API routes
-- Isolated knowledge bases per tenant
-- Isolated call logs per tenant
-- Isolated cost tracking per tenant
-- Tenant switching/isolation in all database queries
-
-**Database Schema:**
-```sql
-CREATE TABLE organizations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  slug VARCHAR(100) UNIQUE NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Add tenant_id to existing tables
-ALTER TABLE documents ADD COLUMN organization_id UUID REFERENCES organizations(id);
-ALTER TABLE call_logs ADD COLUMN organization_id UUID REFERENCES organizations(id);
-
--- Create indexes for performance
-CREATE INDEX idx_documents_org ON documents(organization_id);
-CREATE INDEX idx_call_logs_org ON call_logs(organization_id);
-
--- RLS policies (CRITICAL for security)
-ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
-ALTER TABLE call_logs ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can only see their organization's documents"
-  ON documents FOR SELECT
-  USING (organization_id = current_setting('app.current_organization_id')::uuid);
-
-CREATE POLICY "Users can only see their organization's call logs"
-  ON call_logs FOR SELECT
-  USING (organization_id = current_setting('app.current_organization_id')::uuid);
-```
-
-**Files to create:**
-- `lib/tenant.ts` - Tenant context management
-- `middleware-tenant.ts` - Tenant isolation middleware
-- Database migration scripts (`migrations/` directory)
-- `lib/migrations.ts` - Migration runner
-
-**MVP Criteria:** Multiple customers can use the system without seeing each other's data. Security is non-negotiable.
-
-**Why this is critical:** Without this, all customers share one database. This is a security and business disaster.
-
----
-
-### Phase 10: User Authentication & Sign-Up (CRITICAL)
-**Goal:** Users can sign up, log in, and access their workspace
-
-**What needs to be built:**
-- User sign-up flow (email/password)
-- User login flow
-- Session management (NextAuth.js recommended, or Supabase Auth)
-- Organization creation on sign-up (auto-create org for new user)
-- User-organization association (users belong to one org initially)
-- Protected routes (require authentication)
-- Password reset flow
-- Email verification (optional but recommended)
-- Logout functionality
-
-**Database Schema:**
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  organization_id UUID REFERENCES organizations(id),
-  role VARCHAR(50) DEFAULT 'owner',
-  email_verified BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE sessions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id),
-  token VARCHAR(255) UNIQUE NOT NULL,
-  expires_at TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-**Files to create:**
-- `app/api/auth/signup/route.ts` - Sign-up endpoint
-- `app/api/auth/login/route.ts` - Login endpoint
-- `app/api/auth/logout/route.ts` - Logout endpoint
-- `app/login/page.tsx` - Login page
-- `app/signup/page.tsx` - Sign-up page
-- `lib/auth.ts` - Auth utilities (password hashing, token generation)
-- `middleware.ts` - Route protection middleware
-- `lib/session.ts` - Session management
-
-**MVP Criteria:** Users can create accounts, log in, and access their isolated workspace.
-
-**Why this is critical:** Without auth, there's no way to identify users or enforce multi-tenancy.
-
----
-
-### Phase 11: Payment Integration & Usage Tracking (CRITICAL)
-**Goal:** Free tier ($1 credit limit) then paid plans with per-tenant cost tracking
-
-**What needs to be built:**
-- Stripe integration (or similar payment provider)
-- Free tier: $1 credit limit per organization
-- Per-tenant usage tracking (costs, calls, tokens)
-- Cost allocation per organization (not global)
-- Payment plan selection UI
-- Billing dashboard per tenant
-- Usage alerts when approaching limit (email notifications)
-- Automatic service suspension at limit
-- Stripe webhook handling for subscription events
-
-**Database Schema:**
-```sql
-CREATE TABLE subscriptions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id) UNIQUE,
-  plan VARCHAR(50) DEFAULT 'free',
-  stripe_customer_id VARCHAR(255),
-  stripe_subscription_id VARCHAR(255),
-  status VARCHAR(50) DEFAULT 'active',
-  current_period_end TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE usage_tracking (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  date DATE NOT NULL,
-  cost_usd DECIMAL(10, 4) DEFAULT 0,
-  calls_count INTEGER DEFAULT 0,
-  tokens_used INTEGER DEFAULT 0,
-  stt_minutes DECIMAL(10, 2) DEFAULT 0,
-  tts_characters INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(organization_id, date)
-);
-
-CREATE INDEX idx_usage_org_date ON usage_tracking(organization_id, date);
-```
-
-**Files to create:**
-- `lib/stripe.ts` - Stripe integration
-- `lib/billing.ts` - Billing logic (check limits, calculate costs)
-- `app/api/stripe/webhook/route.ts` - Stripe webhooks
-- `app/api/stripe/create-checkout/route.ts` - Create checkout session
-- `components/billing-dashboard.tsx` - Billing UI
-- `lib/usage-tracker.ts` - Track usage per organization
-- `lib/email.ts` - Email notifications (usage alerts, billing)
-
-**MVP Criteria:** 
-- Free tier works with $1 limit
-- Usage tracked per organization
-- Users can upgrade to paid plans
-- Service suspends at limit
-- Email alerts sent
-
-**Why this is critical:** Without payments, there's no business model. Without per-tenant cost tracking, you can't bill correctly.
-
----
-
-### Phase 12: Per-Tenant Phone Number Provisioning (CRITICAL)
-**Goal:** Each customer gets their own phone number and Vapi configuration
-
-**What needs to be built:**
-- Phone number provisioning per organization (via Vapi API)
-- Per-tenant Vapi account/configuration
-- Organization-specific webhook URLs (tenant ID in webhook path)
-- Phone number management UI (provision, release, configure)
-- Vapi configuration per tenant (system prompt, knowledge base, etc.)
-- Webhook routing to correct tenant based on phone number
-
-**Database Schema:**
-```sql
-CREATE TABLE phone_numbers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  phone_number VARCHAR(20) UNIQUE NOT NULL,
-  vapi_phone_number_id VARCHAR(255),
-  vapi_assistant_id VARCHAR(255),
-  status VARCHAR(50) DEFAULT 'active',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-**Files to create:**
-- `lib/vapi-tenant.ts` - Per-tenant Vapi operations
-- `app/api/phone-numbers/provision/route.ts` - Provision phone number
-- `app/api/phone-numbers/[id]/route.ts` - Manage phone number
-- `components/phone-number-manager.tsx` - Phone number UI
-- Update `app/api/vapi-webhook/route.ts` - Route to correct tenant
-
-**MVP Criteria:**
-- Each tenant has their own phone number
-- Webhooks route to correct tenant
-- Each tenant can configure their own Vapi settings
-
-**Why this is critical:** Without this, all customers share one phone number. This breaks the product.
-
----
-
-### Phase 13: Basic Admin Panel & Email Notifications (IMPORTANT)
-**Goal:** Admin can manage tenants, users get email notifications
-
-**What needs to be built:**
-- Admin panel to view all organizations
-- Admin can see usage per tenant
-- Admin can suspend/activate tenants
-- Email service integration (SendGrid, Resend, or similar)
-- Email templates for:
-  - Sign-up confirmation
-  - Usage alerts (80% of limit, 100% of limit)
-  - Billing notifications
-  - Password reset
-- Email sending infrastructure
-
-**Files to create:**
-- `app/admin/page.tsx` - Admin dashboard
-- `lib/email.ts` - Email sending utilities
-- `lib/email-templates.ts` - Email templates
-- `app/api/admin/` - Admin API routes
-
-**MVP Criteria:** Admin can manage system, users get important notifications via email.
-
-**Why this is important:** Without admin panel, you can't manage customers. Without emails, users won't know about limits/issues.
-
----
-
-### Phase 14: MVP Ready (REAL MVP)
-**Goal:** Actual MVP that customers can use independently
-
-**What needs to be built:**
-- All phases 8-13 complete
-- End-to-end testing with real sign-ups
-- Basic documentation for end users
-- Simple onboarding flow (can be just instructions page, not full wizard)
-- Support contact method (email or basic help page)
-
-**MVP Criteria:**
-- ✅ Deployed and accessible on internet
-- ✅ Preview deployment fully working
-- ⏳ Users can sign up without developer help (Phase 10)
-- ⏳ Each user has isolated workspace (Phase 9)
-- ⏳ Free tier with $1 limit works (Phase 11)
-- ⏳ Users can upload knowledge base (Phase 9)
-- ⏳ Users can provision their own phone number (Phase 12)
-- ⏳ Users can receive phone calls on their number (Phase 12)
-- ⏳ Payment system works (Phase 11)
-- ⏳ Usage tracking and billing works (Phase 11)
-- ⏳ No developer intervention needed for new sign-ups (Phases 9-13)
-
-**This is the REAL MVP.** Everything before this is just feature development.
-
----
-
-## 📋 Post-MVP Features (Lower Priority)
-
-### Phase 15: Multi-User Sessions & Conversation History
-**Goal:** Support conversation history and multi-user sessions within an organization
-
-**Note:** This is nice-to-have, not MVP critical. Can be added after MVP.
-
----
-
-### Phase 16: Human Handoff System
-**Goal:** Escalate complex queries to human agents
-
-**Note:** Post-MVP feature. Not required for initial launch.
-
----
-
-### Phase 17: Tool Use / Function Calling
-**Goal:** Enable AI to call external functions and APIs
-
-**Note:** Post-MVP feature. Advanced functionality.
-
----
-
-### Phase 18: Production Hardening & Scaling
-**Goal:** Production-ready, scalable, monitored system
-
-**Key Areas:**
-1. **Rate Limiting** - Per-tenant call limits, IP-based throttling
-2. **Performance Optimization** - Response caching (Redis), connection pooling, CDN
-3. **Monitoring & Alerting** - Uptime monitoring, error tracking, latency monitoring
-4. **Security Hardening** - DDoS protection, enhanced SQL injection prevention
-5. **CI/CD Pipeline** - Automated testing, staging deployment
-
----
-
-## 🛠️ Technology Stack
-
-### Core Technologies
-- **Frontend:** Next.js 14, React, TypeScript, Tailwind CSS
-- **Backend:** Next.js API Routes, Node.js
-- **AI:** Gemini 2.5 Flash (`@google/genai`)
-- **Embeddings:** `text-embedding-004` model (768 dimensions)
-- **Vector DB:** Supabase with pgvector (PostgreSQL)
-- **Voice:** Google Cloud Speech-to-Text & Text-to-Speech
-- **Telephony:** VAPI.ai (Phase 5)
-- **Runtime:** Node.js 18+, PostgreSQL 13+
-
-### External Services
-| Service | Purpose | Config |
-|---------|---------|--------|
-| Google Gemini API | AI response generation | `GEMINI_API_KEY` in `.env.local` |
-| Google Cloud STT | Voice transcription | Service account JSON |
-| Google Cloud TTS | Audio generation | Service account JSON |
-| Supabase | Vector database + storage | Connection details in `.env.local` |
-| VAPI.ai | Telephony platform | Account configured |
-
-### Key Constraints
-- **Audio Format:** WebM/Opus input (48kHz) → MP3 output
-- **Embedding Dimension:** 768 (text-embedding-004)
-- **Languages:** English, Modern Standard Arabic (ar-SA)
-- **RAG-Only:** No external web search
-
-### Performance Characteristics
-- **STT Latency:** 1-3 seconds
-- **Embedding Generation:** 0.5 seconds
-- **RAG Retrieval:** 0.3-0.5 seconds
-- **AI Response:** 1-2 seconds
-- **TTS Synthesis:** 0.5-1 second
-- **Total Round-Trip:** 3-7 seconds (batch mode)
-
----
-
-## 📁 Critical Files Reference
-
-### Documentation
-- `PROJECT_STATE.md` - This file (project status and phases) - Comprehensive technical details
-- `CURRENT_PHASE.md` - Current phase focus (Phase 8D testing instructions)
-- `README.md` - Setup instructions for humans
-- `BUSINESS_STRATEGY.md` - Business model and go-to-market strategy
-- `archive/ARCHITECTURE_LATENCY.md` - Streaming, latency analysis, and architecture decisions (archived)
-- `archive/PHASE_8B_FIXES_COMPLETED.md` - Complete Phase 8B fix documentation (archived)
-- `archive/NEXT_AGENT_START_HERE.md` - Production deployment guide (archived)
-
-### Core Backend
-- `app/api/chat/route.ts` - Text chat endpoint with RAG
-- `app/api/voice/route.ts` - Voice endpoint (STT → RAG → TTS)
-- `app/api/ingest/route.ts` - Document upload & embedding (FIXED PDF parsing)
-- `app/api/documents/route.ts` - Document list/delete
-- `app/api/vapi-webhook/route.ts` - Vapi webhook handler (with call logging)
-- `app/api/vapi-function/route.ts` - Vapi server function (Supabase RAG)
-- `app/api/calls/route.ts` - Call logs API (GET calls, statistics)
-- `app/api/health/route.ts` - Health check endpoint (Phase 8B)
-
-### Core Libraries
-- `lib/gemini.ts` - Gemini AI client
-- `lib/rag.ts` - RAG retrieval with language filtering
-- `lib/voice.ts` - STT/TTS with language support
-- `lib/supabase.ts` - Supabase client (FIXED connection pooling)
-- `lib/language.ts` - Language configuration
-- `lib/cost-monitor.ts` - Cost tracking
-- `lib/document-context.ts` - Document refresh events
-- `lib/vapi.ts` - Vapi integration helpers
-- `lib/call-handler.ts` - Call state management and logging (with retry logic & circuit breaker)
-- `lib/call-monitor.ts` - Call quality tracking and health scoring (Phase 7)
-- `lib/google-cloud-credentials.ts` - Production credentials helper (Phase 8A)
-
-### Frontend Components
-- `components/chat-interface.tsx` - Main chat UI with voice
-- `components/ingestion-form.tsx` - Document upload form
-- `components/document-list.tsx` - Document management UI
-- `components/cost-dashboard.tsx` - Cost monitoring display
-- `components/call-dashboard.tsx` - Call statistics and quality dashboard (Phase 7)
-- `components/admin-dashboard.tsx` - Main admin dashboard with section routing
-- `components/bento-dashboard.tsx` - Dashboard overview with quick stats
-- `app/page.tsx` - Main page layout
-
-### Knowledge Bases
-- `knowledge-bases/base-en.txt` - English knowledge base
-- `knowledge-bases/base-ar.txt` - Arabic knowledge base
-- `knowledge-bases/sample-en.txt` - English sample
-- `knowledge-bases/sample-ar.txt` - Arabic sample
-
----
-
-## 🔧 Environment Setup
-
-### Environment Variables (.env.local)
-```bash
-GEMINI_API_KEY=your_gemini_api_key
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-```
-
-### Google Cloud Credentials
-Place service account JSON at: `lib/google-cloud-key.json`
-
-### Supabase Setup
-1. Run the complete database setup script (`supabase-setup.sql`) in Supabase SQL Editor:
-   - Creates `documents` table with pgvector support
-   - Creates `call_logs` table for call tracking (Phase 6)
-   - Creates `match_documents()` RPC function for RAG
-   - Sets up indexes and triggers
-2. The script is idempotent (safe to run multiple times)
-
----
-
-## 💡 System Instructions
-
-Current system instruction used in `app/api/chat/route.ts`:
-
-```
-You are Zoid AI Support Agent, a helpful and friendly customer service representative for the MENA region.
-Your goal is to answer the user's question based ONLY on the provided context.
-If the context does not contain the answer, you MUST politely state that you do not have the information and cannot assist with that specific query. DO NOT mention the context, the knowledge base, or your limitations.
+# Start dev server
+npm run dev
+
+# Test chat API
+curl -X POST http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Hello", "language": "en-US"}'
+
+# Check health
+curl http://localhost:3000/api/health
 ```
 
 ---
 
-## 🐛 Known Issues & Workarounds
+## Cost Estimates (1000 calls/day)
 
-1. **Google Cloud Credentials Path**
-   - Must be absolute from `process.cwd()`
-   - ✅ Workaround: Ensure `lib/google-cloud-key.json` exists
-
-2. **RTL Text Rendering**
-   - Arabic needs `dir="rtl"` attribute
-   - ✅ Workaround: Implemented in chat interface
-
-3. **WebM/Opus Encoding**
-   - Browser records at 48kHz
-   - ✅ Workaround: Hardcoded in voice API
-
-4. **Embedding Model Consistency**
-   - Must use same model for all embeddings
-   - ✅ Workaround: Centralized as `EMBEDDING_MODEL`
-
-5. **Supabase Function**
-   - Custom `match_documents()` RPC required
-   - ✅ Workaround: SQL provided in `lib/rag.ts`
-
-6. **Vapi Tool Creation Error**
-   - Server-side error when creating API Request tool
-   - ✅ Fixed: Tool creation now working
-   - ✅ Connected Supabase RAG via API Request tool
-   - ✅ Real phone call testing completed
-
-7. **Phone Call Latency (API Tool)**
-   - Current latency: ~1.5-3 seconds (batch processing)
-   - Vapi file upload: ~200-500ms (fast, but static)
-   - ⚠️ Trade-off: Dynamic RAG vs speed
-   - 📋 TODO: Optimize batch processing to ~800ms-1.5s (see `ARCHITECTURE_LATENCY.md`)
-   - 📖 **See:** `ARCHITECTURE_LATENCY.md` for streaming capabilities, optimization strategies, and trade-offs
-
-8. **Supabase Client Initialization Error**
-   - Module evaluation error when `SUPABASE_SERVICE_ROLE_KEY` is missing
-   - ✅ Fixed: Conditional client creation with Proxy fallback in `lib/supabase.ts`
-   - Client only initializes if both URL and key are present
-   - Helpful error message thrown if used without configuration
-   - App no longer crashes on startup if Supabase env vars are missing
-
-9. **Vercel Deployment - Chat Interface "fetch failed" Error**
-   - Error: `TypeError: fetch failed` when calling Supabase RPC
-   - ✅ Fixed: Removed truncated `NODE_ENV` environment variable
-   - ✅ Result: Chat works perfectly in preview
-
-10. **Vercel Deployment - Document Upload DOMMatrix Error**
-    - Error: `ReferenceError: DOMMatrix is not defined` in PDF parsing
-    - ✅ Fixed: Changed `pdf-parse` import to use `require()` in `app/api/ingest/route.ts`
-    - ✅ Result: Document upload works perfectly in preview
-
----
-
-## 🎯 Development Rules
-
-**CRITICAL RULES for all agents:**
-
-1. **Browser Interaction:** NEVER use `browser_action` tool. Ask user to test and provide screenshots.
-2. **Version Control:** Commit changes to Git frequently for rollback capability.
-3. **Documentation:** Keep PROJECT_STATE.md updated with progress.
-4. **Mode Switching:** Switch to appropriate mode before major tasks.
-5. **Baby Steps:** Make incremental changes; test each step before proceeding.
-6. **File Creation:** Do NOT create .md before asking the user.
-7. **do not mention any timelines:** user will move at his own pace
-
----
-
-## 🌍 MENA-Specific Considerations
-
-### Language Support
-**Current:**
-- ✅ Modern Standard Arabic (MSA)
-- ✅ English
-
-**Future:**
-- Egyptian Arabic
-- Gulf Arabic (Khaleeji)
-- Levantine Arabic
-- Maghrebi Arabic
-
-### Infrastructure
-**Recommended Hosting:**
-- AWS UAE (Middle East - Bahrain) region
-- Or AWS EU (Frankfurt) for GDPR compliance
-- Target: <100ms latency from MENA
-
-**Phone Numbers:**
-- Local providers: du, Etisalat (UAE)
-- Saudi Telecom Company (KSA)
-- Verify regional coverage with telephony provider
-
----
-
-## 💰 Cost Estimates
-
-### Current Costs (Per 1000 Calls/Day)
-- **Gemini 2.5 Flash:** ~$30/month
-- **Google Cloud STT:** ~$480/month
-- **Google Cloud TTS:** ~$2,280/month
-- **Supabase:** ~$25/month
-- **Total:** ~$2,815/month
-
-### Additional Costs (Post-Phase 5)
-- **Telephony platform:** $50-90/month per 1000 calls
-- **Phone numbers:** $1-5/month per number
-- **Total Estimated:** ~$3,000/month for 1000 calls/day
-
-### Cost Monitoring
-- ✅ Real-time tracking implemented
-- ✅ Dashboard showing usage
-- ✅ Per-request cost breakdown
-- 🔜 Alert system (Phase 11)
-- 🔜 Budget caps (Phase 11)
-
----
-
-## 🚀 Quick Test Checklist
-
-- [ ] Text chat works (English)
-- [ ] Text chat works (Arabic)
-- [ ] Voice recording works (English)
-- [ ] Voice recording works (Arabic)
-- [ ] Document upload works
-- [ ] Document list displays
-- [ ] Cost dashboard shows data
-- [ ] Session persists on refresh
-- [ ] Phone number receives calls (Phase 5)
-- [ ] Call logs are stored in database (Phase 6)
-- [ ] Call statistics API returns data (Phase 6)
-- [ ] Webhook stores call events correctly (Phase 6)
-- [ ] Call dashboard displays statistics (Phase 7)
-- [ ] Error recovery handles failures gracefully (Phase 7)
-- [ ] Health score calculation works correctly (Phase 7)
-
----
-
-**Last Updated:** November 21, 2025  
-**Version:** 3.0 - Phase 8C Complete, Phase 8D Pending  
-**Status:** Phases 1-8C Complete, Phase 8D (Production Testing) Pending
-
-**Recent Updates (Nov 21, 2025):**
-- ✅ Phase 8C COMPLETE - Production deployment successful
-- ✅ Application live at https://zoiddd.vercel.app
-- ✅ Fixed connection pooling issue (switched to direct connection)
-- ✅ Fixed credentials BOM encoding issue
-- ✅ All 14 API routes deployed successfully
-- ✅ All 9 environment variables configured in production
-- ✅ Production verification completed
-- ⏳ Phase 8D (Production Testing) ready to begin
-
-**Previous Updates (Nov 19, 2025):**
-- ✅ Phase 8B FULLY complete - All issues fixed
-- ✅ Fixed "fetch failed" error by removing NODE_ENV from Vercel Preview
-- ✅ Fixed DOMMatrix error by changing pdf-parse import method
-- ✅ All features tested and working in preview: chat, document upload, voice, analytics
-- ✅ Preview URL: https://zoiddd-49pdd760w-waahmed-4677s-projects.vercel.app
-
-**Recent Updates (Nov 17, 2025):**
-- ✅ Phase 8B Preview Deployment Complete
-- ✅ Deployed to Vercel preview environment
-- ✅ All environment variables configured (10 variables)
-- ✅ Fixed TypeScript build errors (ingest route, sidebar, theme provider)
-- ✅ Updated code for production (credentials helper, connection pooling, lazy initialization)
-- ✅ Created deployment infrastructure files (vercel.json, credentials helper, scripts)
-- ⚠️ Chat interface not working in preview - needs debugging (FIXED)
-- ⚠️ Knowledge base empty - documents need to be uploaded (FIXED)
-- ⚠️ Vapi webhooks not yet updated to preview URL (FIXED)
-
-**Previous Updates (Nov 14, 2025):**
-- ✅ Phase 6 FULLY complete - webhook integration tested and working
-- ✅ Fixed webhook call ID extraction for `end-of-call-report` events (now extracts from `body.message.call.id`)
-- ✅ Fixed metrics extraction to parse Vapi's `costs` array and `costBreakdown` object
-- ✅ Verified all cost data correctly stored: telephony, STT, TTS, AI costs, tokens, quality metrics
-- ✅ Test scripts created: `test-webhook.js`, `check-calls.js`, `verify-database.js`
-- ✅ Webhook simulation test passing with real Vapi payload structure
-
-**Critical Realization:**
-Phases 1-8 are now complete. The app is deployed and accessible on the internet with all features working. Phase 9+ required for multi-tenancy to make this a real MVP that customers can use independently.
+- Gemini: ~$30/month
+- Google STT: ~$480/month
+- Google TTS: ~$2,280/month
+- Supabase: ~$25/month
+- Telephony: ~$50-90/month
+- **Total:** ~$3,000/month
